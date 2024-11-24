@@ -1,4 +1,4 @@
-name: Deploy to Render
+name: Deploy
 
 on:
   push:
@@ -11,6 +11,42 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Trigger Render Deploy Hook
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '18'
+
+      - name: Install backend dependencies
         run: |
-          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          cd backend
+          npm install
+
+      - name: Build backend
+        run: |
+          cd backend
+          npm run build
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          # Deploy backend changes
+          curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_BACKEND_SERVICE_ID }}/deploys \
+            -H "Authorization: Bearer $RENDER_API_KEY"
+          
+          # Deploy frontend changes
+          curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_FRONTEND_SERVICE_ID }}/deploys \
+            -H "Authorization: Bearer $RENDER_API_KEY"
