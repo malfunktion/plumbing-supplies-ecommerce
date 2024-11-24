@@ -4,14 +4,19 @@ import DatabaseSetup from './steps/DatabaseSetup';
 import AdminSetup from './steps/AdminSetup';
 import SampleDataSetup from './steps/SampleDataSetup';
 import DeploymentSetup from './steps/DeploymentSetup';
+import BackendSetup from './steps/BackendSetup';
 import FinishSetup from './steps/FinishSetup';
 
-export type SetupStep = 'database' | 'admin' | 'sample-data' | 'deployment' | 'finish';
+export type SetupStep = 'backend' | 'database' | 'admin' | 'sample-data' | 'deployment' | 'finish';
 
 const SetupWizard = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState<SetupStep>('database');
+  const [currentStep, setCurrentStep] = useState<SetupStep>('backend');
   const [setupData, setSetupData] = useState({
+    backend: {
+      url: '',
+      isConnected: false
+    },
     database: {
       uri: '',
       isConnected: false
@@ -43,7 +48,7 @@ const SetupWizard = () => {
   };
 
   const handleNext = () => {
-    const steps: SetupStep[] = ['database', 'admin', 'sample-data', 'deployment', 'finish'];
+    const steps: SetupStep[] = ['backend', 'database', 'admin', 'sample-data', 'deployment', 'finish'];
     const currentIndex = steps.indexOf(currentStep);
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1]);
@@ -52,14 +57,32 @@ const SetupWizard = () => {
     }
   };
 
+  const handleBack = () => {
+    const steps: SetupStep[] = ['backend', 'database', 'admin', 'sample-data', 'deployment', 'finish'];
+    const currentIndex = steps.indexOf(currentStep);
+    if (currentIndex > 0) {
+      setCurrentStep(steps[currentIndex - 1]);
+    }
+  };
+
   const renderStep = () => {
     switch (currentStep) {
+      case 'backend':
+        return (
+          <BackendSetup
+            onNext={(url) => {
+              updateSetupData('backend', { url, isConnected: true });
+              handleNext();
+            }}
+          />
+        );
       case 'database':
         return (
           <DatabaseSetup
             data={setupData.database}
             onUpdate={(data) => updateSetupData('database', data)}
             onNext={handleNext}
+            onBack={handleBack}
           />
         );
       case 'admin':
@@ -68,6 +91,7 @@ const SetupWizard = () => {
             data={setupData.admin}
             onUpdate={(data) => updateSetupData('admin', data)}
             onNext={handleNext}
+            onBack={handleBack}
           />
         );
       case 'sample-data':
@@ -76,6 +100,7 @@ const SetupWizard = () => {
             data={setupData.sampleData}
             onUpdate={(data) => updateSetupData('sample-data', data)}
             onNext={handleNext}
+            onBack={handleBack}
           />
         );
       case 'deployment':
@@ -84,6 +109,7 @@ const SetupWizard = () => {
             data={setupData.deployment}
             onUpdate={(data) => updateSetupData('deployment', data)}
             onNext={handleNext}
+            onBack={handleBack}
           />
         );
       case 'finish':
@@ -91,6 +117,7 @@ const SetupWizard = () => {
           <FinishSetup
             setupData={setupData}
             onNext={handleNext}
+            onBack={handleBack}
           />
         );
       default:
@@ -99,38 +126,10 @@ const SetupWizard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Setup Wizard
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Let's get your plumbing supplies store up and running
-          </p>
-        </div>
-
-        <div className="mt-8 space-y-6">
-          <div className="bg-white p-8 rounded-lg shadow">
-            {renderStep()}
-          </div>
-
-          <div className="flex justify-between">
-            <div className="flex space-x-2">
-              {['database', 'admin', 'sample-data', 'deployment', 'finish'].map((step, index) => (
-                <div
-                  key={step}
-                  className={`h-2 w-2 rounded-full ${
-                    currentStep === step
-                      ? 'bg-blue-600'
-                      : index < ['database', 'admin', 'sample-data', 'deployment', 'finish'].indexOf(currentStep)
-                      ? 'bg-blue-400'
-                      : 'bg-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {renderStep()}
         </div>
       </div>
     </div>
