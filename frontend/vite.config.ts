@@ -6,7 +6,18 @@ export default defineConfig({
   plugins: [react()],
   base: '/plumbing-supplies-ecommerce/',
   build: {
-    outDir: 'build',
-    sourcemap: true
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
+  },
+  server: {
+    port: 3000,
+    open: true
   }
 });
