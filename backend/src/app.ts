@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import setupRoutes from './routes/setup';
+import atlasRoutes from './routes/mongodb-atlas';
 
 const app = express();
 
@@ -11,6 +12,7 @@ app.use(express.json());
 
 // Routes
 app.use('/api/setup', setupRoutes);
+app.use('/api/atlas', atlasRoutes); // Changed route to avoid duplication
 
 // Health check endpoint
 app.get('/health', (req, res) => {
