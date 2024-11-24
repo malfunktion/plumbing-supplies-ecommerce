@@ -7,8 +7,13 @@ export interface IProduct extends mongoose.Document {
   sku: string;
   price: number;
   category: string;
+  subcategory: string;
+  manufacturer: string;
   images: string[];
-  inStock: number;
+  stockLevel: number;
+  specifications: {
+    [key: string]: string | number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,22 +43,35 @@ const ProductSchema = new mongoose.Schema<IProduct>({
   category: {
     type: String,
     required: true,
-    enum: ['Pipes', 'Fittings', 'Tools', 'Valves', 'Fixtures']
+    enum: ['Pipes & Fittings', 'Valves', 'Tools', 'Fixtures', 'Water Heaters']
+  },
+  subcategory: {
+    type: String,
+    required: true
+  },
+  manufacturer: {
+    type: String,
+    required: true
   },
   images: [{
     type: String,
     validate: {
       validator: function(v: string) {
-        return /^https?:\/\/.+\.(jpg|jpeg|png|gif)$/i.test(v);
+        return /^https?:\/\/.+/i.test(v);
       },
       message: 'Invalid image URL'
     }
   }],
-  inStock: {
+  stockLevel: {
     type: Number,
     required: true,
     min: 0,
     default: 0
+  },
+  specifications: {
+    type: Map,
+    of: mongoose.Schema.Types.Mixed,
+    default: {}
   },
   createdAt: {
     type: Date,
@@ -70,6 +88,8 @@ const ProductSchema = new mongoose.Schema<IProduct>({
 // Create indexes for faster querying
 ProductSchema.index({ sku: 1 }, { unique: true });
 ProductSchema.index({ category: 1 });
+ProductSchema.index({ subcategory: 1 });
+ProductSchema.index({ manufacturer: 1 });
 ProductSchema.index({ price: 1 });
 
 // Pre-save middleware to update timestamps
@@ -78,9 +98,17 @@ ProductSchema.pre('save', function(next) {
   next();
 });
 
-// Static method to find products by category
+// Static methods
 ProductSchema.statics.findByCategory = function(category: string) {
-  return this.find({ category: category });
+  return this.find({ category });
+};
+
+ProductSchema.statics.findBySubcategory = function(subcategory: string) {
+  return this.find({ subcategory });
+};
+
+ProductSchema.statics.findByManufacturer = function(manufacturer: string) {
+  return this.find({ manufacturer });
 };
 
 // Create and export the Product model

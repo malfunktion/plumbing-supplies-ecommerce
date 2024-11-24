@@ -29,9 +29,30 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).send('Something broke!');
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Health check route
+app.get('/health', (req, res) => {
+  res.send('OK');
 });
 
-export default app;
+// Setup wizard API route
+app.use('/api/setup', (req, res) => {
+  res.send('Setup wizard API');
+});
+
+// Start server
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Health check available at http://localhost:${PORT}/health`);
+  console.log(`Setup wizard API available at http://localhost:${PORT}/api/setup`);
+});
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
+});
+
+export default server;
