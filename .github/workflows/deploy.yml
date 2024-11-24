@@ -32,7 +32,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          REACT_APP_API_URL: 'http://localhost:3000'
+          VITE_API_URL: 'https://api.plumbing-supplies.com'  # Change this to your actual API URL
+          VITE_APP_NAME: 'Plumbing Supplies E-Commerce'
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
