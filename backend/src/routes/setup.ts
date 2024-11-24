@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { User } from '../models/User';
 import { Product } from '../models/Product';
 import { sampleProducts } from '../data/sampleProducts';
+import { seedProducts } from '../seed/products';
 
 const router = express.Router();
 
@@ -113,6 +114,21 @@ router.post('/install-sample-data', async (req, res) => {
     res.status(500).json({ 
       error: 'Failed to install sample data',
       details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Add seed data endpoint
+router.post('/seed-data', async (req, res) => {
+  try {
+    await seedProducts();
+    res.json({ success: true, message: 'Sample products added successfully' });
+  } catch (error) {
+    console.error('Error seeding products:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to add sample products',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

@@ -1,4 +1,4 @@
-name: Deploy
+name: Deploy Frontend
 
 on:
   push:
@@ -6,9 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Deploy
+  deploy-frontend:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     
     steps:
       - name: Checkout code
@@ -19,34 +21,16 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install backend dependencies
-        run: |
-          cd backend
-          npm install
+      - name: Install Dependencies
+        run: npm install
 
-      - name: Build backend
-        run: |
-          cd backend
-          npm run build
-
-      - name: Install frontend dependencies
-        run: |
-          cd frontend
-          npm install
-
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
-
-      - name: Deploy to Render
+      - name: Build
+        run: npm run build
         env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
-        run: |
-          # Deploy backend changes
-          curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_BACKEND_SERVICE_ID }}/deploys \
-            -H "Authorization: Bearer $RENDER_API_KEY"
-          
-          # Deploy frontend changes
-          curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_FRONTEND_SERVICE_ID }}/deploys \
-            -H "Authorization: Bearer $RENDER_API_KEY"
+          REACT_APP_API_URL: ${{ secrets.API_URL }}
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: frontend/build
+          branch: gh-pages

@@ -2,6 +2,7 @@
   "name": "plumbing-supplies-frontend",
   "version": "1.0.0",
   "private": true,
+  "homepage": "https://malfunktion.github.io/plumbing-supplies-ecommerce",
   "dependencies": {
     "@reduxjs/toolkit": "^1.9.7",
     "@stripe/react-stripe-js": "^2.4.0",

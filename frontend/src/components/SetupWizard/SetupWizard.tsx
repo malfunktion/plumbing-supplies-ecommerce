@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import DatabaseSetup from './steps/DatabaseSetup';
 import AdminSetup from './steps/AdminSetup';
 import SampleDataSetup from './steps/SampleDataSetup';
+import DeploymentSetup from './steps/DeploymentSetup';
 import FinishSetup from './steps/FinishSetup';
 
-export type SetupStep = 'database' | 'admin' | 'sample-data' | 'finish';
+export type SetupStep = 'database' | 'admin' | 'sample-data' | 'deployment' | 'finish';
 
 const SetupWizard = () => {
   const navigate = useNavigate();
@@ -23,6 +24,11 @@ const SetupWizard = () => {
     sampleData: {
       install: false,
       isInstalled: false
+    },
+    deployment: {
+      frontendDeployment: '',
+      backendDeployment: '',
+      isConfigured: false
     }
   });
 
@@ -37,7 +43,7 @@ const SetupWizard = () => {
   };
 
   const handleNext = () => {
-    const steps: SetupStep[] = ['database', 'admin', 'sample-data', 'finish'];
+    const steps: SetupStep[] = ['database', 'admin', 'sample-data', 'deployment', 'finish'];
     const currentIndex = steps.indexOf(currentStep);
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1]);
@@ -72,8 +78,21 @@ const SetupWizard = () => {
             onNext={handleNext}
           />
         );
+      case 'deployment':
+        return (
+          <DeploymentSetup
+            data={setupData.deployment}
+            onUpdate={(data) => updateSetupData('deployment', data)}
+            onNext={handleNext}
+          />
+        );
       case 'finish':
-        return <FinishSetup onComplete={() => navigate('/')} />;
+        return (
+          <FinishSetup
+            setupData={setupData}
+            onNext={handleNext}
+          />
+        );
       default:
         return null;
     }
@@ -98,13 +117,13 @@ const SetupWizard = () => {
 
           <div className="flex justify-between">
             <div className="flex space-x-2">
-              {['database', 'admin', 'sample-data', 'finish'].map((step, index) => (
+              {['database', 'admin', 'sample-data', 'deployment', 'finish'].map((step, index) => (
                 <div
                   key={step}
                   className={`h-2 w-2 rounded-full ${
                     currentStep === step
                       ? 'bg-blue-600'
-                      : index < ['database', 'admin', 'sample-data', 'finish'].indexOf(currentStep)
+                      : index < ['database', 'admin', 'sample-data', 'deployment', 'finish'].indexOf(currentStep)
                       ? 'bg-blue-400'
                       : 'bg-gray-300'
                   }`}

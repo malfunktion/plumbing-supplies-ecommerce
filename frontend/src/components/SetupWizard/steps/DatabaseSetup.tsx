@@ -27,6 +27,7 @@ const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ onNext, onBack }) => {
   const [atlasOrgId, setAtlasOrgId] = useState('');
   const [atlasProjectName, setAtlasProjectName] = useState('plumbing-supplies');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [includeSampleData, setIncludeSampleData] = useState(true);
 
   const handleAtlasLogin = async () => {
     setLoading(true);
@@ -45,6 +46,11 @@ const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ onNext, onBack }) => {
         setAtlasUsername(username);
         setAtlasPassword(password);
         setAtlasClusterUrl(clusterUrl);
+        
+        if (includeSampleData) {
+          await axios.post('/api/setup/seed-data');
+        }
+        
         setSuccess(true);
       }
     } catch (err) {
@@ -164,13 +170,27 @@ const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ onNext, onBack }) => {
                           placeholder="Enter project name"
                         />
                       </div>
-                      <button
-                        onClick={handleAtlasLogin}
-                        disabled={loading}
-                        className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-                      >
-                        {loading ? 'Connecting...' : 'Connect with Atlas'}
-                      </button>
+                      <div className="space-y-6">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="includeSampleData"
+                            checked={includeSampleData}
+                            onChange={(e) => setIncludeSampleData(e.target.checked)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor="includeSampleData" className="text-sm text-gray-700">
+                            Include 200 sample plumbing products (recommended for testing)
+                          </label>
+                        </div>
+                        <button
+                          onClick={handleAtlasLogin}
+                          disabled={loading}
+                          className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {loading ? 'Connecting...' : 'Connect with Atlas'}
+                        </button>
+                      </div>
                     </div>
                   </>
                 ) : (
