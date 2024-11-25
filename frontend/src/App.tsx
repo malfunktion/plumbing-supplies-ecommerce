@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 import { DashboardLayout } from './components/shared/DashboardLayout';
-import { AdminDashboard } from './components/dashboard/admin/AdminDashboard';  // Add this import
+import { AdminDashboard } from './components/admin/dashboard/AdminDashboard';  // Updated import path
 
 // Create a theme instance
 const theme = createTheme({
