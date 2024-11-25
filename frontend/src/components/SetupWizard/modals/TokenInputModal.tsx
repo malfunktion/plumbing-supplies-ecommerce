@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useTheme } from '@/hooks/useTheme';
+import React from 'react';
+import { useTheme } from '@mui/material/styles';
 import {
   Dialog,
   DialogTitle,
@@ -56,8 +56,8 @@ export const TokenInputModal = ({
   title,
   description,
 }: TokenInputModalProps) => {
-  const [token, setToken] = useState('');
-  const [error, setError] = useState('');
+  const [token, setToken] = React.useState('');
+  const [error, setError] = React.useState('');
 
   const handleSubmit = () => {
     if (!token.trim()) {

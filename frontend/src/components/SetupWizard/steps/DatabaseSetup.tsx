@@ -1,13 +1,30 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { DatabaseSetupProps } from '@/types/setup';
+import { useTheme } from '@mui/material/styles';
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  Paper,
+  FormControlLabel,
+  Switch,
+  styled
+} from '@mui/material';
+import type { DatabaseSetupProps } from '@/types/setup';
 
 enum DatabaseType {
   MONGODB_ATLAS = 'MONGODB_ATLAS',
   MONGODB_LOCAL = 'MONGODB_LOCAL'
 }
 
-const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ data, onUpdate, onNext, onBack }) => {
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(3),
+  marginBottom: theme.spacing(3),
+}));
+
+export const DatabaseSetup = ({ data, onUpdate, onNext, onBack }: DatabaseSetupProps) => {
+  const theme = useTheme();
   const [dbType, setDbType] = useState<DatabaseType>(DatabaseType.MONGODB_ATLAS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -16,261 +33,119 @@ const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ data, onUpdate, onNext, o
   const [atlasUsername, setAtlasUsername] = useState('');
   const [atlasPassword, setAtlasPassword] = useState('');
   const [atlasClusterUrl, setAtlasClusterUrl] = useState('');
-  
-  // Direct Atlas Integration
-  const [atlasApiKey, setAtlasApiKey] = useState('');
-  const [atlasOrgId, setAtlasOrgId] = useState('');
-  const [atlasProjectName, setAtlasProjectName] = useState('plumbing-supplies');
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [includeSampleData, setIncludeSampleData] = useState(true);
 
-  const handleAtlasLogin = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Call MongoDB Atlas API to create/configure database
-      const response = await axios.post('/api/setup/mongodb-atlas', {
-        apiKey: atlasApiKey,
-        orgId: atlasOrgId,
-        projectName: atlasProjectName
-      });
-
-      if (response.data.success) {
-        // Auto-fill the connection details from the response
-        const { username, password, clusterUrl } = response.data;
-        setAtlasUsername(username);
-        setAtlasPassword(password);
-        setAtlasClusterUrl(clusterUrl);
-        
-        const uri = `mongodb+srv://${username}:${password}@${clusterUrl}/?retryWrites=true&w=majority`;
-        onUpdate({ uri, isConnected: true });
-        
-        if (includeSampleData) {
-          await axios.post('/api/setup/seed-data');
-        }
-        
-        onNext();
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to connect to MongoDB Atlas');
-      onUpdate({ isConnected: false });
-    }
-    setLoading(false);
+  const validateMongoDBUri = (uri: string): boolean => {
+    const mongoDbUriPattern = /^mongodb(\+srv)?:\/\/.+/;
+    return mongoDbUriPattern.test(uri);
   };
 
   const handleTestConnection = async () => {
     setLoading(true);
     setError(null);
+    
     try {
-      let uri;
-      if (dbType === DatabaseType.MONGODB_ATLAS) {
-        uri = `mongodb+srv://${atlasUsername}:${atlasPassword}@${atlasClusterUrl}/?retryWrites=true&w=majority`;
+      const uri = `mongodb+srv://${atlasUsername}:${atlasPassword}@${atlasClusterUrl}/?retryWrites=true&w=majority`;
+      
+      if (!validateMongoDBUri(uri)) {
+        throw new Error('Invalid MongoDB URI format');
       }
 
-      const response = await axios.post('/api/setup/test-database', { uri });
+      // Store the URI in the setup data
+      onUpdate({ 
+        uri,
+        isConnected: true,
+        includeSampleData
+      });
       
-      if (response.data.success) {
-        onUpdate({ uri, isConnected: true });
-        // Save the connection details securely
-        await axios.post('/api/setup/save-config', {
-          type: dbType,
-          uri,
-          atlasOrgId: atlasOrgId || undefined,
-          atlasProjectName: atlasProjectName || undefined
-        });
-        onNext();
-      }
+      onNext();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to test connection');
+      setError(err instanceof Error ? err.message : 'Failed to validate connection string');
       onUpdate({ isConnected: false });
     }
+    
     setLoading(false);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white shadow-sm rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Database Setup</h2>
+    <Box sx={{ p: 3 }}>
+      <StyledPaper>
+        <Typography variant="h5" sx={{ mb: 3 }}>
+          Database Setup
+        </Typography>
         
-        <div className="space-y-4">
-          <div className="flex space-x-4">
-            <button
-              className={`px-4 py-2 rounded ${
-                dbType === DatabaseType.MONGODB_ATLAS
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200'
-              }`}
-              onClick={() => setDbType(DatabaseType.MONGODB_ATLAS)}
-            >
-              MongoDB Atlas (Recommended)
-            </button>
-            <button
-              className={`px-4 py-2 rounded ${
-                dbType === DatabaseType.MONGODB_LOCAL
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200'
-              }`}
-              onClick={() => setDbType(DatabaseType.MONGODB_LOCAL)}
-            >
-              Local MongoDB
-            </button>
-          </div>
+        <Typography variant="body1" sx={{ mb: 3 }}>
+          Configure your MongoDB Atlas database connection
+        </Typography>
 
-          {dbType === DatabaseType.MONGODB_ATLAS && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600 mb-4">
-                  Connect with MongoDB Atlas for a fully managed database solution.
-                </p>
-                
-                <div className="mb-4">
-                  <button
-                    className="text-blue-600 text-sm"
-                    onClick={() => setShowAdvanced(!showAdvanced)}
-                  >
-                    {showAdvanced ? 'Hide' : 'Show'} Advanced Options (Direct Atlas Integration)
-                  </button>
-                </div>
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            fullWidth
+            label="Atlas Username"
+            value={atlasUsername}
+            onChange={(e) => setAtlasUsername(e.target.value)}
+            margin="normal"
+            disabled={loading}
+          />
+          
+          <TextField
+            fullWidth
+            type="password"
+            label="Atlas Password"
+            value={atlasPassword}
+            onChange={(e) => setAtlasPassword(e.target.value)}
+            margin="normal"
+            disabled={loading}
+          />
+          
+          <TextField
+            fullWidth
+            label="Atlas Cluster URL"
+            value={atlasClusterUrl}
+            onChange={(e) => setAtlasClusterUrl(e.target.value)}
+            margin="normal"
+            disabled={loading}
+            placeholder="cluster0.xxxxx.mongodb.net"
+          />
 
-                {showAdvanced ? (
-                  <>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Atlas API Key
-                        </label>
-                        <input
-                          type="password"
-                          value={atlasApiKey}
-                          onChange={(e) => setAtlasApiKey(e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          placeholder="Enter your Atlas API Key"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Organization ID
-                        </label>
-                        <input
-                          type="text"
-                          value={atlasOrgId}
-                          onChange={(e) => setAtlasOrgId(e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          placeholder="Enter your Atlas Organization ID"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Project Name
-                        </label>
-                        <input
-                          type="text"
-                          value={atlasProjectName}
-                          onChange={(e) => setAtlasProjectName(e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          placeholder="Enter project name"
-                        />
-                      </div>
-                      <div className="space-y-6">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id="includeSampleData"
-                            checked={includeSampleData}
-                            onChange={(e) => setIncludeSampleData(e.target.checked)}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                          <label htmlFor="includeSampleData" className="text-sm text-gray-700">
-                            Include 200 sample plumbing products (recommended for testing)
-                          </label>
-                        </div>
-                        <button
-                          onClick={handleAtlasLogin}
-                          disabled={loading}
-                          className="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-                        >
-                          {loading ? 'Connecting...' : 'Connect with Atlas'}
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Username
-                        </label>
-                        <input
-                          type="text"
-                          value={atlasUsername}
-                          onChange={(e) => setAtlasUsername(e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          placeholder="Enter your Atlas username"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Password
-                        </label>
-                        <input
-                          type="password"
-                          value={atlasPassword}
-                          onChange={(e) => setAtlasPassword(e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          placeholder="Enter your Atlas password"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Cluster URL
-                        </label>
-                        <input
-                          type="text"
-                          value={atlasClusterUrl}
-                          onChange={(e) => setAtlasClusterUrl(e.target.value)}
-                          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                          placeholder="cluster0.xxxxx.mongodb.net"
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
-            </div>
-          )}
-
-          <div className="flex justify-between pt-4">
-            {onBack && (
-              <button
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                onClick={onBack}
+          <FormControlLabel
+            control={
+              <Switch
+                checked={includeSampleData}
+                onChange={(e) => setIncludeSampleData(e.target.checked)}
                 disabled={loading}
-              >
-                Back
-              </button>
-            )}
+              />
+            }
+            label="Include sample data"
+          />
+        </Box>
 
-            {!showAdvanced && (
-              <button
-                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                onClick={handleTestConnection}
-                disabled={loading || !atlasUsername || !atlasPassword || !atlasClusterUrl}
-              >
-                {loading ? 'Testing Connection...' : 'Test Connection & Continue'}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+          <Button
+            variant="outlined"
+            onClick={onBack}
+            disabled={loading}
+          >
+            Back
+          </Button>
+
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              variant="contained"
+              onClick={handleTestConnection}
+              disabled={loading || !atlasUsername || !atlasPassword || !atlasClusterUrl}
+            >
+              {loading ? 'Validating...' : 'Validate & Continue'}
+            </Button>
+          </Box>
+        </Box>
+      </StyledPaper>
+    </Box>
   );
 };
-
-export default DatabaseSetup;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -17,7 +17,7 @@ import SampleDataSetup from './steps/SampleDataSetup';
 import { DeploymentSetup } from './steps/DeploymentSetup';
 import BackendSetup from './steps/BackendSetup';
 import FinishSetup from './steps/FinishSetup';
-import { SetupStep, SetupData } from '@/types/setup';
+import type { SetupStep, SetupData } from '@/types/setup';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
@@ -55,16 +55,17 @@ const StyledStepper = styled(Stepper)(({ theme }) => ({
   },
 }));
 
-const steps = [
-  'Backend Setup',
-  'Database Configuration',
-  'Admin Setup',
-  'Sample Data Setup',
-  'Deployment Configuration',
-  'Finish Setup'
+const steps: Array<{ label: string; key: SetupStep }> = [
+  { label: 'Backend Setup', key: 'backend' },
+  { label: 'Database Configuration', key: 'database' },
+  { label: 'Admin Setup', key: 'admin' },
+  { label: 'Sample Data Setup', key: 'sample-data' },
+  { label: 'Deployment Configuration', key: 'deployment' },
+  { label: 'Finish Setup', key: 'finish' }
 ];
 
 const SetupWizard = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
   const [setupData, setSetupData] = useState<SetupData>({
@@ -88,16 +89,27 @@ const SetupWizard = () => {
     deployment: {
       frontendDeployment: '',
       backendDeployment: '',
+      frontendConfig: {},
+      backendConfig: {},
+      validation: {
+        isValid: false,
+        errors: [],
+        warnings: []
+      },
       isConfigured: false
     }
   });
 
   const handleNext = () => {
-    setActiveStep((prevStep) => prevStep + 1);
+    if (activeStep < steps.length - 1) {
+      setActiveStep((prevStep) => prevStep + 1);
+    }
   };
 
   const handleBack = () => {
-    setActiveStep((prevStep) => prevStep - 1);
+    if (activeStep > 0) {
+      setActiveStep((prevStep) => prevStep - 1);
+    }
   };
 
   const handleSetupDataUpdate = <K extends keyof SetupData>(
@@ -116,7 +128,7 @@ const SetupWizard = () => {
         return (
           <BackendSetup
             data={setupData.backend}
-            onUpdate={(data: Partial<SetupData['backend']>) => handleSetupDataUpdate('backend', data)}
+            onUpdate={(data) => handleSetupDataUpdate('backend', data)}
             onNext={handleNext}
           />
         );
@@ -124,7 +136,7 @@ const SetupWizard = () => {
         return (
           <DatabaseSetup
             data={setupData.database}
-            onUpdate={(data: Partial<SetupData['database']>) => handleSetupDataUpdate('database', data)}
+            onUpdate={(data) => handleSetupDataUpdate('database', data)}
             onNext={handleNext}
             onBack={handleBack}
           />
@@ -133,7 +145,7 @@ const SetupWizard = () => {
         return (
           <AdminSetup
             data={setupData.admin}
-            onUpdate={(data: Partial<SetupData['admin']>) => handleSetupDataUpdate('admin', data)}
+            onUpdate={(data) => handleSetupDataUpdate('admin', data)}
             onNext={handleNext}
             onBack={handleBack}
           />
@@ -142,7 +154,7 @@ const SetupWizard = () => {
         return (
           <SampleDataSetup
             data={setupData.sampleData}
-            onUpdate={(data: Partial<SetupData['sampleData']>) => handleSetupDataUpdate('sampleData', data)}
+            onUpdate={(data) => handleSetupDataUpdate('sampleData', data)}
             onNext={handleNext}
             onBack={handleBack}
           />
@@ -151,7 +163,7 @@ const SetupWizard = () => {
         return (
           <DeploymentSetup
             data={setupData.deployment}
-            onUpdate={(data: Partial<SetupData['deployment']>) => handleSetupDataUpdate('deployment', data)}
+            onUpdate={(data) => handleSetupDataUpdate('deployment', data)}
             onNext={handleNext}
             onBack={handleBack}
           />
@@ -194,8 +206,8 @@ const SetupWizard = () => {
         </Typography>
 
         <StyledStepper activeStep={activeStep} alternativeLabel>
-          {steps.map((label) => (
-            <Step key={label}>
+          {steps.map(({ label, key }) => (
+            <Step key={key}>
               <StepLabel>{label}</StepLabel>
             </Step>
           ))}

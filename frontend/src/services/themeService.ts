@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ThemeDocument } from '../../../backend/src/models/theme';
+import { ThemeDocument } from '@/types/theme';
 
 const API_URL = process.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -34,21 +34,9 @@ export const themeService = {
     return response.data;
   },
 
-  // Set theme as default
-  setDefaultTheme: async (id: string) => {
-    const response = await axios.post(`${API_URL}/api/themes/${id}/default`);
-    return response.data;
-  },
-
-  // Clone existing theme
-  cloneTheme: async (id: string) => {
-    const response = await axios.post(`${API_URL}/api/themes/${id}/clone`);
-    return response.data;
-  },
-
-  // Export theme
-  exportTheme: async (id: string) => {
-    const response = await axios.get(`${API_URL}/api/themes/${id}/export`);
+  // Apply theme to current session
+  applyTheme: async (theme: ThemeDocument) => {
+    const response = await axios.post(`${API_URL}/api/themes/apply`, theme);
     return response.data;
   },
 
@@ -58,50 +46,9 @@ export const themeService = {
     return response.data;
   },
 
-  // Apply theme to DOM
-  applyTheme: (theme: ThemeDocument) => {
-    const root = document.documentElement;
-
-    // Apply colors
-    Object.entries(theme.colors.primary).forEach(([key, value]) => {
-      root.style.setProperty(`--primary-${key}`, value);
-    });
-
-    Object.entries(theme.colors.background).forEach(([key, value]) => {
-      root.style.setProperty(`--bg-${key}`, value);
-    });
-
-    Object.entries(theme.colors.text).forEach(([key, value]) => {
-      root.style.setProperty(`--text-${key}`, value);
-    });
-
-    Object.entries(theme.colors.border).forEach(([key, value]) => {
-      root.style.setProperty(`--border-${key}`, value);
-    });
-
-    // Apply layout
-    root.style.setProperty('--container-padding', theme.layout.containerPadding);
-    root.style.setProperty('--header-height', theme.layout.headerHeight);
-    root.style.setProperty('--sidebar-width', theme.layout.sidebarWidth);
-
-    Object.entries(theme.layout.borderRadius).forEach(([key, value]) => {
-      root.style.setProperty(`--radius-${key}`, value);
-    });
-
-    Object.entries(theme.layout.spacing).forEach(([key, value]) => {
-      root.style.setProperty(`--spacing-${key}`, value);
-    });
-
-    // Apply typography
-    root.style.setProperty('--font-sans', theme.typography.fontFamily.sans);
-    root.style.setProperty('--font-mono', theme.typography.fontFamily.mono);
-
-    Object.entries(theme.typography.fontSize).forEach(([key, value]) => {
-      root.style.setProperty(`--font-size-${key}`, value);
-    });
-
-    Object.entries(theme.typography.fontWeight).forEach(([key, value]) => {
-      root.style.setProperty(`--font-weight-${key}`, value.toString());
-    });
+  // Export theme
+  exportTheme: async (id: string) => {
+    const response = await axios.get(`${API_URL}/api/themes/${id}/export`);
+    return response.data;
   }
 };

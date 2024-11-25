@@ -11,412 +11,181 @@ import {
   Alert,
   styled,
   Paper,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
-import { DeploymentConfigForm } from './DeploymentConfig';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { deploymentPlatforms } from '@/services/deploymentValidation';
 import { TokenInputModal } from '../modals/TokenInputModal';
 import { CredentialsModal } from '../modals/CredentialsModal';
-import type { DeploymentSetupProps } from '@/types/setup';
+import type { DeploymentSetupProps, AuthConfig } from '@/types/setup';
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
+const StyledCard = styled(Card)(({ theme }) => ({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  borderRadius: theme.shape.borderRadius * 2,
+  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: theme.shadows[4],
+  },
+}));
+
+const StyledCardContent = styled(CardContent)(({ theme }) => ({
+  flexGrow: 1,
   padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: theme.palette.background.paper,
-  boxShadow: theme.shadows[1],
-  '& .MuiTypography-h5': {
-    color: theme.palette.primary.main,
-    marginBottom: theme.spacing(3),
-  },
 }));
 
-const StyledFormControl = styled(FormControl)(({ theme }) => ({
-  marginBottom: theme.spacing(3),
-  '& .MuiInputLabel-root': {
-    color: theme.palette.text.secondary,
-  },
-  '& .MuiOutlinedInput-root': {
-    '&:hover fieldset': {
-      borderColor: theme.palette.primary.main,
-    },
-  },
+const StyledCardActions = styled(CardActions)(({ theme }) => ({
+  padding: theme.spacing(2),
+  justifyContent: 'flex-end',
 }));
 
-const StyledButton = styled(Button)(({ theme }) => ({
-  margin: theme.spacing(1),
-  '&.MuiButton-containedPrimary': {
-    backgroundColor: theme.palette.primary.main,
-    '&:hover': {
-      backgroundColor: theme.palette.primary.dark,
-    },
-  },
+const FeatureList = styled(List)(({ theme }) => ({
+  padding: 0,
 }));
 
-const deploymentOptions = {
-  frontend: [
-    {
-      id: 'github-pages',
-      name: 'GitHub Pages',
-      description: 'Free hosting for static sites directly from your GitHub repository',
-      features: ['Free forever', 'Easy GitHub integration', 'Automatic builds'],
-      auth: {
-        type: 'oauth',
-        provider: 'github',
-        scope: ['repo', 'workflow'],
-        setupUrl: 'https://github.com/login/oauth/authorize'
-      }
-    },
-    {
-      id: 'vercel',
-      name: 'Vercel',
-      description: 'Zero-config deployments for static and JAMstack sites',
-      features: ['Generous free tier', 'Automatic HTTPS', 'Global CDN'],
-      auth: {
-        type: 'oauth',
-        provider: 'vercel',
-        scope: ['read', 'write', 'deploy'],
-        setupUrl: 'https://vercel.com/api/auth'
-      }
-    },
-    {
-      id: 'netlify',
-      name: 'Netlify',
-      description: 'All-in-one platform for automating modern web projects',
-      features: ['Free tier available', 'Form handling', 'Identity service'],
-      auth: {
-        type: 'oauth',
-        provider: 'netlify',
-        scope: ['deploy', 'site'],
-        setupUrl: 'https://app.netlify.com/authorize'
-      }
-    },
-    {
-      id: 'cloudflare-pages',
-      name: 'Cloudflare Pages',
-      description: 'Fast, secure hosting for frontend developers',
-      features: ['Free tier with unlimited sites', 'Global CDN', 'Automatic git integration'],
-      auth: {
-        type: 'api-token',
-        provider: 'cloudflare',
-        setupUrl: 'https://dash.cloudflare.com/profile/api-tokens'
-      }
-    },
-    {
-      id: 'surge',
-      name: 'Surge',
-      description: 'Simple, single-command web publishing',
-      features: ['Free tier available', 'Custom domain support', 'Easy CLI deployment'],
-      auth: {
-        type: 'credentials',
-        provider: 'surge',
-        setupUrl: 'https://surge.sh/help/adding-collaborators'
-      }
-    }
-  ],
-  backend: [
-    {
-      id: 'render',
-      name: 'Render',
-      description: 'Unified platform to build and run all your apps',
-      features: ['Free tier available', 'Automatic HTTPS', 'Built-in CDN'],
-      auth: {
-        type: 'api-key',
-        provider: 'render',
-        setupUrl: 'https://render.com/docs/api'
-      }
-    },
-    {
-      id: 'railway',
-      name: 'Railway',
-      description: 'Infrastructure, Instantly',
-      features: ['Free tier for development', 'One-click deployments', 'Built-in databases'],
-      auth: {
-        type: 'oauth',
-        provider: 'railway',
-        scope: ['project', 'deploy'],
-        setupUrl: 'https://railway.app/cli'
-      }
-    },
-    {
-      id: 'fly-io',
-      name: 'Fly.io',
-      description: 'Run your full-stack apps close to your users',
-      features: ['Generous free tier', 'Global deployment', 'Docker support'],
-      auth: {
-        type: 'api-token',
-        provider: 'fly',
-        setupUrl: 'https://fly.io/docs/flyctl/auth-token/'
-      }
-    },
-    {
-      id: 'cyclic',
-      name: 'Cyclic',
-      description: 'Fullstack JavaScript deployment made simple',
-      features: ['Free tier available', 'Auto-scaling', 'Built-in monitoring'],
-      auth: {
-        type: 'oauth',
-        provider: 'github',
-        scope: ['repo'],
-        setupUrl: 'https://app.cyclic.sh/api/login'
-      }
-    },
-    {
-      id: 'adaptable',
-      name: 'Adaptable',
-      description: 'Simple deployment platform for Node.js apps',
-      features: ['Free tier for hobby projects', 'Auto-scaling', 'Easy database integration'],
-      auth: {
-        type: 'oauth',
-        provider: 'github',
-        scope: ['repo'],
-        setupUrl: 'https://adaptable.io/docs/api-reference'
-      }
-    }
-  ]
-};
+const FeatureItem = styled(ListItem)(({ theme }) => ({
+  padding: theme.spacing(0.5, 0),
+}));
 
-export const DeploymentSetup = ({ data, onUpdate, onNext, onBack }: DeploymentSetupProps) => {
+export const DeploymentSetup: React.FC<DeploymentSetupProps> = ({ data, onUpdate, onNext, onBack }) => {
+  const theme = useTheme();
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [showCredentialsModal, setShowCredentialsModal] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<'frontend' | 'backend'>('frontend');
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
-  const handleFrontendDeploymentChange = (value: string) => {
-    onUpdate({
-      frontendDeployment: value,
-      frontendConfig: {},
-      frontendAuth: { isAuthenticated: false },
-    });
+  const handlePlatformSelect = (platform: 'frontend' | 'backend') => {
+    setSelectedPlatform(platform);
+    setSelectedProvider(null);
   };
 
-  const handleBackendDeploymentChange = (value: string) => {
-    onUpdate({
-      backendDeployment: value,
-      backendConfig: {},
-      backendAuth: { isAuthenticated: false },
-    });
+  const handleProviderSelect = (providerId: string) => {
+    setSelectedProvider(providerId);
+    const provider = deploymentPlatforms[selectedPlatform].find(p => p.id === providerId);
+    if (provider?.auth.type === 'api-token') {
+      setShowTokenModal(true);
+    } else {
+      setShowCredentialsModal(true);
+    }
   };
 
-  const handleFrontendConfigChange = (config: any) => {
+  const handleAuthComplete = (config: AuthConfig) => {
     onUpdate({
-      frontendConfig: config,
-    });
-  };
-
-  const handleBackendConfigChange = (config: any) => {
-    onUpdate({
-      backendConfig: config,
-    });
-  };
-
-  const handleValidationStatus = (status: any, isBackend: boolean) => {
-    onUpdate({
+      ...data,
+      [`${selectedPlatform}Deployment`]: selectedProvider,
+      [`${selectedPlatform}Config`]: config,
       validation: {
-        ...data.validation,
-        [isBackend ? 'backendValid' : 'frontendValid']: status.isValid,
-        isValid: isBackend
-          ? status.isValid && (data.validation?.frontendValid ?? true)
-          : status.isValid && (data.validation?.backendValid ?? true),
+        isValid: true,
+        errors: [],
+        warnings: [],
       },
+      isConfigured: true,
     });
-  };
-
-  const selectedFrontend = deploymentOptions.frontend.find(
-    (p) => p.id === data.frontendDeployment
-  );
-
-  const selectedBackend = deploymentOptions.backend.find(
-    (p) => p.id === data.backendDeployment
-  );
-
-  const handleAuth = async (option: any, isBackend: boolean) => {
-    const { auth } = option;
-
-    try {
-      switch (auth.type) {
-        case 'oauth':
-          // Open OAuth popup
-          const width = 600;
-          const height = 600;
-          const left = window.innerWidth / 2 - width / 2;
-          const top = window.innerHeight / 2 - height / 2;
-          const popup = window.open(
-            auth.setupUrl,
-            'Auth',
-            `width=${width},height=${height},left=${left},top=${top}`
-          );
-
-          // Handle OAuth callback
-          const handleMessage = (event: MessageEvent) => {
-            if (event.origin === window.location.origin && event.data?.type === 'oauth_callback') {
-              const { token } = event.data;
-              handleAuthSuccess(option, isBackend, token);
-              window.removeEventListener('message', handleMessage);
-              popup?.close();
-            }
-          };
-          window.addEventListener('message', handleMessage);
-          break;
-
-        case 'api-token':
-          const token = await showTokenInputModal(option.name);
-          if (token) {
-            handleAuthSuccess(option, isBackend, token);
-          }
-          break;
-
-        case 'credentials':
-          const credentials = await showCredentialsModal(option.name);
-          if (credentials) {
-            handleAuthSuccess(option, isBackend, JSON.stringify(credentials));
-          }
-          break;
-      }
-    } catch (error) {
-      console.error('Authentication error:', error);
-      setError('Authentication failed. Please try again.');
-    }
-  };
-
-  const handleAuthSuccess = async (
-    option: any,
-    isBackend: boolean,
-    token: string
-  ) => {
-    const isValid = await DeploymentValidationService.validateAuth(option, token);
-    if (!isValid) {
-      setError('Invalid authentication credentials. Please try again.');
-      return;
-    }
-
-    onUpdate({
-      [`${isBackend ? 'backend' : 'frontend'}Auth`]: {
-        ...option.auth,
-        token,
-        isAuthenticated: true,
-      },
-    });
+    setShowTokenModal(false);
+    setShowCredentialsModal(false);
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <StyledPaper>
-        <Typography variant="h5">
-          Deployment Setup
-        </Typography>
+    <Box sx={{ width: '100%', p: 3 }}>
+      <Typography variant="h5" gutterBottom>
+        Select Deployment Platform
+      </Typography>
 
-        {/* Frontend Deployment Selection */}
-        <StyledFormControl fullWidth>
-          <InputLabel>Frontend Platform</InputLabel>
-          <Select
-            value={data.frontendDeployment || ''}
-            onChange={(e) => handleFrontendDeploymentChange(e.target.value)}
-            label="Frontend Platform"
-          >
-            {deploymentOptions.frontend.map((platform) => (
-              <MenuItem key={platform.id} value={platform.id}>
-                {platform.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </StyledFormControl>
+      <Box sx={{ mb: 4 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            <Button
+              fullWidth
+              variant={selectedPlatform === 'frontend' ? 'contained' : 'outlined'}
+              onClick={() => handlePlatformSelect('frontend')}
+              sx={{ py: 2 }}
+            >
+              Frontend Deployment
+            </Button>
+          </Grid>
+          <Grid item xs={6}>
+            <Button
+              fullWidth
+              variant={selectedPlatform === 'backend' ? 'contained' : 'outlined'}
+              onClick={() => handlePlatformSelect('backend')}
+              sx={{ py: 2 }}
+            >
+              Backend Deployment
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
 
-        {/* Frontend Configuration */}
-        {selectedFrontend && data.frontendAuth?.isAuthenticated && (
-          <Box sx={{ mb: 4 }}>
-            <DeploymentConfigForm
-              platform={selectedFrontend}
-              config={data.frontendConfig || {}}
-              onChange={handleFrontendConfigChange}
-              onValidation={(status) => handleValidationStatus(status, false)}
-            />
-          </Box>
-        )}
+      <Grid container spacing={3}>
+        {deploymentPlatforms[selectedPlatform].map((platform) => (
+          <Grid item xs={12} md={4} key={platform.id}>
+            <StyledCard>
+              <StyledCardContent>
+                <Typography variant="h6" gutterBottom>
+                  {platform.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" paragraph>
+                  {platform.description}
+                </Typography>
+                <FeatureList>
+                  {platform.features.map((feature, index) => (
+                    <FeatureItem key={index}>
+                      <ListItemIcon sx={{ minWidth: 36 }}>
+                        <CheckCircleOutlineIcon color="primary" fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary={feature} />
+                    </FeatureItem>
+                  ))}
+                </FeatureList>
+              </StyledCardContent>
+              <StyledCardActions>
+                <Button
+                  variant="contained"
+                  onClick={() => handleProviderSelect(platform.id)}
+                  disabled={data[`${selectedPlatform}Deployment`] === platform.id}
+                >
+                  {data[`${selectedPlatform}Deployment`] === platform.id ? 'Selected' : 'Select'}
+                </Button>
+              </StyledCardActions>
+            </StyledCard>
+          </Grid>
+        ))}
+      </Grid>
 
-        {/* Backend Deployment Selection */}
-        <StyledFormControl fullWidth>
-          <InputLabel>Backend Platform</InputLabel>
-          <Select
-            value={data.backendDeployment || ''}
-            onChange={(e) => handleBackendDeploymentChange(e.target.value)}
-            label="Backend Platform"
-          >
-            {deploymentOptions.backend.map((platform) => (
-              <MenuItem key={platform.id} value={platform.id}>
-                {platform.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </StyledFormControl>
-
-        {/* Backend Configuration */}
-        {selectedBackend && data.backendAuth?.isAuthenticated && (
-          <Box sx={{ mb: 4 }}>
-            <DeploymentConfigForm
-              platform={selectedBackend}
-              config={data.backendConfig || {}}
-              onChange={handleBackendConfigChange}
-              onValidation={(status) => handleValidationStatus(status, true)}
-            />
-          </Box>
-        )}
-
-        {/* Error Messages */}
-        {error && (
-          <Alert 
-            severity="error" 
-            sx={{ 
-              mt: 2,
-              mb: 2,
-              borderRadius: 1,
-            }}
-          >
-            {error}
-          </Alert>
-        )}
-
-        {/* Navigation Buttons */}
-        <Box sx={{ 
-          mt: 4, 
-          display: 'flex', 
-          justifyContent: 'space-between',
-          borderTop: 1,
-          borderColor: 'divider',
-          pt: 3,
-        }}>
-          <StyledButton onClick={onBack}>
-            Back
-          </StyledButton>
-          <StyledButton
+      {(data.frontendDeployment || data.backendDeployment) && (
+        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>
+          <Button onClick={onBack}>Back</Button>
+          <Button
             variant="contained"
             onClick={onNext}
-            disabled={!data.validation?.isValid}
+            disabled={!data.frontendDeployment || !data.backendDeployment}
           >
             Next
-          </StyledButton>
+          </Button>
         </Box>
-      </StyledPaper>
+      )}
 
-      {/* Modals */}
       <TokenInputModal
         open={showTokenModal}
         onClose={() => setShowTokenModal(false)}
-        onSubmit={(token) => {
-          // Handle token submission
-          setShowTokenModal(false);
-        }}
-        title="Enter API Token"
-        description="Please enter your API token to authenticate."
+        onSubmit={handleAuthComplete}
+        platform={selectedProvider ? deploymentPlatforms[selectedPlatform].find(p => p.id === selectedProvider)! : null}
       />
 
       <CredentialsModal
         open={showCredentialsModal}
         onClose={() => setShowCredentialsModal(false)}
-        onSubmit={(username, password) => {
-          // Handle credentials submission
-          setShowCredentialsModal(false);
-        }}
-        title="Enter Credentials"
-        description="Please enter your credentials to authenticate."
+        onSubmit={handleAuthComplete}
+        platform={selectedProvider ? deploymentPlatforms[selectedPlatform].find(p => p.id === selectedProvider)! : null}
       />
     </Box>
   );

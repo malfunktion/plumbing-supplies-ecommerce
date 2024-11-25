@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useTheme } from '@/hooks/useTheme';
+import React from 'react';
+import { useTheme } from '@mui/material/styles';
 import {
   Box,
   TextField,
@@ -64,14 +64,14 @@ export const DeploymentConfigForm: React.FC<DeploymentConfigProps> = ({
   onChange,
   onValidation,
 }) => {
-  const [localConfig, setLocalConfig] = useState<DeploymentConfig>(config);
-  const [validation, setValidation] = useState<ValidationStatus>({
+  const [localConfig, setLocalConfig] = React.useState<DeploymentConfig>(config);
+  const [validation, setValidation] = React.useState<ValidationStatus>({
     isValid: true,
     errors: [],
     warnings: [],
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     validateConfig();
   }, [localConfig]);
 

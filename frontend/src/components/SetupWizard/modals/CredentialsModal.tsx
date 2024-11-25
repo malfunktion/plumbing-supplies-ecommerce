@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useTheme } from '@/hooks/useTheme';
+import React from 'react';
+import { useTheme } from '@mui/material/styles';
 import {
   Dialog,
   DialogTitle,
@@ -59,9 +59,9 @@ export const CredentialsModal: React.FC<CredentialsModalProps> = ({
   onSubmit,
   platformName,
 }) => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [errors, setErrors] = useState({
+  const [username, setUsername] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [errors, setErrors] = React.useState({
     username: '',
     password: '',
   });
