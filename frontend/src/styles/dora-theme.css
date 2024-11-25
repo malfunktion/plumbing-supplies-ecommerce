@@ -1,0 +1,174 @@
+:root {
+  /* Colors from Dora theme */
+  --primary-50: #f0f9ff;
+  --primary-100: #e0f2fe;
+  --primary-200: #bae6fd;
+  --primary-300: #7dd3fc;
+  --primary-400: #38bdf8;
+  --primary-500: #0ea5e9;
+  --primary-600: #0284c7;
+  --primary-700: #0369a1;
+  --primary-800: #075985;
+  --primary-900: #0c4a6e;
+  
+  /* Background colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  
+  /* Text colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  
+  /* Border colors */
+  --border-light: #e2e8f0;
+  --border-medium: #cbd5e1;
+  --border-dark: #94a3b8;
+  
+  /* Shadow styles */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* Layout */
+  --container-padding: 1.5rem;
+  --header-height: 4rem;
+  --sidebar-width: 16rem;
+  
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-full: 9999px;
+}
+
+/* Layout components */
+.dora-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+}
+
+.dora-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Buttons */
+.dora-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: all 0.2s;
+}
+
+.dora-button-primary {
+  background: var(--primary-600);
+  color: white;
+}
+
+.dora-button-primary:hover {
+  background: var(--primary-700);
+}
+
+.dora-button-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.dora-button-secondary:hover {
+  background: var(--border-light);
+}
+
+/* Form elements */
+.dora-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.dora-input:focus {
+  outline: none;
+  border-color: var(--primary-400);
+  box-shadow: 0 0 0 2px var(--primary-100);
+}
+
+.dora-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+/* Radio buttons */
+.dora-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dora-radio-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  transition: all 0.2s;
+}
+
+.dora-radio-item:hover {
+  background: var(--bg-secondary);
+}
+
+.dora-radio-item.selected {
+  border-color: var(--primary-500);
+  background: var(--primary-50);
+}
+
+/* Typography */
+.dora-heading {
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.dora-text {
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Navigation */
+.dora-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  height: var(--header-height);
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-primary);
+}
+
+/* Utilities */
+.dora-shadow-sm { box-shadow: var(--shadow-sm); }
+.dora-shadow-md { box-shadow: var(--shadow-md); }
+.dora-shadow-lg { box-shadow: var(--shadow-lg); }
+
+.dora-rounded-sm { border-radius: var(--radius-sm); }
+.dora-rounded-md { border-radius: var(--radius-md); }
+.dora-rounded-lg { border-radius: var(--radius-lg); }
+.dora-rounded-full { border-radius: var(--radius-full); }
