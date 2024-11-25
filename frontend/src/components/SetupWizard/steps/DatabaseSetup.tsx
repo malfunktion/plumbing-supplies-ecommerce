@@ -2,150 +2,122 @@ import React, { useState } from 'react';
 import { useTheme } from '@mui/material/styles';
 import {
   Box,
-  Typography,
   TextField,
   Button,
+  Typography,
   Alert,
-  Paper,
-  FormControlLabel,
-  Switch,
-  styled
+  CircularProgress,
+  styled,
 } from '@mui/material';
 import type { DatabaseSetupProps } from '@/types/setup';
 
-enum DatabaseType {
-  MONGODB_ATLAS = 'MONGODB_ATLAS',
-  MONGODB_LOCAL = 'MONGODB_LOCAL'
-}
-
-const StyledPaper = styled(Paper)(({ theme }) => ({
+const StyledBox = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3),
-  marginBottom: theme.spacing(3),
+  '& .MuiTextField-root': {
+    marginBottom: theme.spacing(2),
+  },
 }));
 
-export const DatabaseSetup = ({ data, onUpdate, onNext, onBack }: DatabaseSetupProps) => {
+export const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ data, onUpdate, onNext, onBack }) => {
   const theme = useTheme();
-  const [dbType, setDbType] = useState<DatabaseType>(DatabaseType.MONGODB_ATLAS);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // MongoDB Atlas fields
-  const [atlasUsername, setAtlasUsername] = useState('');
-  const [atlasPassword, setAtlasPassword] = useState('');
-  const [atlasClusterUrl, setAtlasClusterUrl] = useState('');
-  const [includeSampleData, setIncludeSampleData] = useState(true);
+  const validateConnectionString = (uri: string): boolean => {
+    try {
+      const url = new URL(uri);
+      return url.protocol === 'mongodb:' || url.protocol === 'mongodb+srv:';
+    } catch {
+      return false;
+    }
+  };
 
-  const validateMongoDBUri = (uri: string): boolean => {
-    const mongoDbUriPattern = /^mongodb(\+srv)?:\/\/.+/;
-    return mongoDbUriPattern.test(uri);
+  const handleUriChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const uri = event.target.value;
+    onUpdate({
+      ...data,
+      uri,
+      isConnected: false,
+    });
+    setError(null);
   };
 
   const handleTestConnection = async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const uri = `mongodb+srv://${atlasUsername}:${atlasPassword}@${atlasClusterUrl}/?retryWrites=true&w=majority`;
-      
-      if (!validateMongoDBUri(uri)) {
-        throw new Error('Invalid MongoDB URI format');
-      }
-
-      // Store the URI in the setup data
-      onUpdate({ 
-        uri,
-        isConnected: true,
-        includeSampleData
-      });
-      
-      onNext();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to validate connection string');
-      onUpdate({ isConnected: false });
+    if (!validateConnectionString(data.uri)) {
+      setError('Invalid MongoDB connection string format');
+      return;
     }
-    
-    setLoading(false);
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // In the frontend, we'll just validate the format
+      const isValid = validateConnectionString(data.uri);
+      
+      if (isValid) {
+        onUpdate({
+          ...data,
+          isConnected: true,
+        });
+      } else {
+        setError('Invalid connection string format');
+      }
+    } catch (err) {
+      setError('Failed to connect to database. Please check your connection string.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <StyledPaper>
-        <Typography variant="h5" sx={{ mb: 3 }}>
-          Database Setup
-        </Typography>
-        
-        <Typography variant="body1" sx={{ mb: 3 }}>
-          Configure your MongoDB Atlas database connection
-        </Typography>
+    <StyledBox>
+      <Typography variant="h5" gutterBottom>
+        Database Configuration
+      </Typography>
 
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            label="Atlas Username"
-            value={atlasUsername}
-            onChange={(e) => setAtlasUsername(e.target.value)}
-            margin="normal"
-            disabled={loading}
-          />
-          
-          <TextField
-            fullWidth
-            type="password"
-            label="Atlas Password"
-            value={atlasPassword}
-            onChange={(e) => setAtlasPassword(e.target.value)}
-            margin="normal"
-            disabled={loading}
-          />
-          
-          <TextField
-            fullWidth
-            label="Atlas Cluster URL"
-            value={atlasClusterUrl}
-            onChange={(e) => setAtlasClusterUrl(e.target.value)}
-            margin="normal"
-            disabled={loading}
-            placeholder="cluster0.xxxxx.mongodb.net"
-          />
+      <TextField
+        fullWidth
+        label="MongoDB Connection String"
+        value={data.uri}
+        onChange={handleUriChange}
+        placeholder="mongodb://username:password@host:port/database"
+        error={!!error}
+        helperText={error || 'Enter your MongoDB connection string'}
+        disabled={isLoading}
+      />
 
-          <FormControlLabel
-            control={
-              <Switch
-                checked={includeSampleData}
-                onChange={(e) => setIncludeSampleData(e.target.checked)}
-                disabled={loading}
-              />
-            }
-            label="Include sample data"
-          />
-        </Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+      <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>
+        <Button onClick={onBack} disabled={isLoading}>
+          Back
+        </Button>
+        <Box>
           <Button
-            variant="outlined"
-            onClick={onBack}
-            disabled={loading}
+            onClick={handleTestConnection}
+            disabled={!data.uri || isLoading}
+            sx={{ mr: 2 }}
           >
-            Back
+            {isLoading ? (
+              <CircularProgress size={24} />
+            ) : (
+              'Test Connection'
+            )}
           </Button>
-
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              variant="contained"
-              onClick={handleTestConnection}
-              disabled={loading || !atlasUsername || !atlasPassword || !atlasClusterUrl}
-            >
-              {loading ? 'Validating...' : 'Validate & Continue'}
-            </Button>
-          </Box>
+          <Button
+            variant="contained"
+            onClick={onNext}
+            disabled={!data.isConnected || isLoading}
+          >
+            Next
+          </Button>
         </Box>
-      </StyledPaper>
-    </Box>
+      </Box>
+    </StyledBox>
   );
 };

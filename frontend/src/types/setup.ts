@@ -27,13 +27,53 @@ export interface SampleDataSetupData {
   isInstalled: boolean;
 }
 
+// Validation status types
+export interface ValidationStatus {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+// Deployment config types
+export interface DeploymentConfig {
+  nodeVersion?: string;
+  framework?: string;
+  buildCommand?: string;
+  outputDir?: string;
+  customDomain?: string;
+  environmentVars?: Record<string, string>;
+}
+
+// Deployment option types
+export interface DeploymentOption {
+  id: string;
+  name: string;
+  description: string;
+  features: string[];
+  auth: {
+    type: 'oauth' | 'api-token' | 'credentials';
+    provider: string;
+    scope?: string[];
+    setupUrl: string;
+    validationUrl?: string;
+  };
+  requirements: {
+    minimumNodeVersion?: string;
+    supportedFrameworks?: string[];
+    requiredEnvironmentVars?: string[];
+    maximumDeploySize?: number;
+    maximumBuildDuration?: number;
+  };
+}
+
 // Authentication types
-export type AuthType = 'oauth' | 'token' | 'basic';
+export type AuthType = 'oauth' | 'api-token' | 'credentials';
 
 export interface AuthConfig {
   type: AuthType;
   provider: string;
   setupUrl: string;
+  token?: string;
   isAuthenticated: boolean;
 }
 
@@ -48,8 +88,8 @@ export interface DeploymentValidation {
 export interface DeploymentSetupData {
   frontendDeployment: string;
   backendDeployment: string;
-  frontendConfig: Record<string, any>;
-  backendConfig: Record<string, any>;
+  frontendConfig: DeploymentConfig;
+  backendConfig: DeploymentConfig;
   frontendAuth?: AuthConfig;
   backendAuth?: AuthConfig;
   validation?: DeploymentValidation;

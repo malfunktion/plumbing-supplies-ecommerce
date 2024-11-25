@@ -11,12 +11,12 @@ import {
   Paper,
   styled,
 } from '@mui/material';
-import DatabaseSetup from './steps/DatabaseSetup';
-import AdminSetup from './steps/AdminSetup';
-import SampleDataSetup from './steps/SampleDataSetup';
+import { DatabaseSetup } from './steps/DatabaseSetup';
+import { AdminSetup } from './steps/AdminSetup';
+import { SampleDataSetup } from './steps/SampleDataSetup';
 import { DeploymentSetup } from './steps/DeploymentSetup';
-import BackendSetup from './steps/BackendSetup';
-import FinishSetup from './steps/FinishSetup';
+import { BackendSetup } from './steps/BackendSetup';
+import { FinishSetup } from './steps/FinishSetup';
 import type { SetupStep, SetupData } from '@/types/setup';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
@@ -64,7 +64,7 @@ const steps: Array<{ label: string; key: SetupStep }> = [
   { label: 'Finish Setup', key: 'finish' }
 ];
 
-const SetupWizard = () => {
+export const SetupWizard: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
@@ -101,122 +101,95 @@ const SetupWizard = () => {
   });
 
   const handleNext = () => {
-    if (activeStep < steps.length - 1) {
-      setActiveStep((prevStep) => prevStep + 1);
-    }
+    setActiveStep((prevStep) => prevStep + 1);
   };
 
   const handleBack = () => {
-    if (activeStep > 0) {
-      setActiveStep((prevStep) => prevStep - 1);
-    }
+    setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleSetupDataUpdate = <K extends keyof SetupData>(
-    step: K,
-    data: Partial<SetupData[K]>
-  ) => {
+  const handleUpdate = (stepData: Partial<SetupData>) => {
     setSetupData((prevData) => ({
       ...prevData,
-      [step]: { ...prevData[step], ...data }
+      ...stepData,
     }));
   };
 
-  const renderStep = () => {
-    switch (activeStep) {
-      case 0:
+  const getCurrentStep = () => {
+    const currentStepKey = steps[activeStep].key;
+
+    switch (currentStepKey) {
+      case 'backend':
         return (
           <BackendSetup
             data={setupData.backend}
-            onUpdate={(data) => handleSetupDataUpdate('backend', data)}
+            onUpdate={(data) => handleUpdate({ backend: data })}
             onNext={handleNext}
+            onBack={handleBack}
           />
         );
-      case 1:
+      case 'database':
         return (
           <DatabaseSetup
             data={setupData.database}
-            onUpdate={(data) => handleSetupDataUpdate('database', data)}
+            onUpdate={(data) => handleUpdate({ database: data })}
             onNext={handleNext}
             onBack={handleBack}
           />
         );
-      case 2:
+      case 'admin':
         return (
           <AdminSetup
             data={setupData.admin}
-            onUpdate={(data) => handleSetupDataUpdate('admin', data)}
+            onUpdate={(data) => handleUpdate({ admin: data })}
             onNext={handleNext}
             onBack={handleBack}
           />
         );
-      case 3:
+      case 'sample-data':
         return (
           <SampleDataSetup
             data={setupData.sampleData}
-            onUpdate={(data) => handleSetupDataUpdate('sampleData', data)}
+            onUpdate={(data) => handleUpdate({ sampleData: data })}
             onNext={handleNext}
             onBack={handleBack}
           />
         );
-      case 4:
+      case 'deployment':
         return (
           <DeploymentSetup
             data={setupData.deployment}
-            onUpdate={(data) => handleSetupDataUpdate('deployment', data)}
+            onUpdate={(data) => handleUpdate({ deployment: data })}
             onNext={handleNext}
             onBack={handleBack}
           />
         );
-      case 5:
+      case 'finish':
         return (
           <FinishSetup
-            setupData={setupData}
-            onNext={() => navigate('/')}
+            data={setupData}
             onBack={handleBack}
+            onComplete={() => navigate('/')}
           />
         );
       default:
-        return (
-          <Box sx={{ p: 3 }}>
-            <Typography variant="h6" color="primary">
-              Step {activeStep + 1}
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 2 }}>
-              This step is under construction.
-            </Typography>
-          </Box>
-        );
+        return null;
     }
   };
 
   return (
     <StyledContainer maxWidth="lg">
       <StyledPaper>
-        <Typography 
-          variant="h4" 
-          sx={{ 
-            mb: 4,
-            color: 'primary.main',
-            fontWeight: 600,
-            textAlign: 'center',
-          }}
-        >
-          Setup Wizard
-        </Typography>
-
         <StyledStepper activeStep={activeStep} alternativeLabel>
-          {steps.map(({ label, key }) => (
-            <Step key={key}>
+          {steps.map(({ label }) => (
+            <Step key={label}>
               <StepLabel>{label}</StepLabel>
             </Step>
           ))}
         </StyledStepper>
 
-        {renderStep()}
+        {getCurrentStep()}
       </StyledPaper>
     </StyledContainer>
   );
 };
-
-export default SetupWizard;
