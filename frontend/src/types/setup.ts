@@ -51,19 +51,38 @@ export interface PlatformRequirements {
   supportedFrameworks?: string[];
 }
 
+// Auth types
+export type AuthType = 'oauth' | 'api-token' | 'credentials';
+
+export interface AuthCredentials {
+  token?: string;
+  path?: string;
+  domain?: string;
+  [key: string]: string | undefined;
+}
+
+export interface AuthConfig {
+  type: AuthType;
+  provider: string;
+  setupUrl: string;
+  isAuthenticated: boolean;
+  credentials?: AuthCredentials;
+}
+
 // Deployment config types
 export interface DeploymentConfig {
   provider: string;
   region?: string;
   environment: 'development' | 'staging' | 'production';
   platform?: string;
+  domain?: string;
   resources: {
     memory: string;
     storage: string;
     cpu: string;
   };
   auth: {
-    type: 'oauth' | 'api-token' | 'credentials';
+    type: AuthType;
     provider: string;
     scope?: string[];
     setupUrl?: string;
@@ -71,6 +90,8 @@ export interface DeploymentConfig {
     username?: string;
     password?: string;
     secure?: boolean;
+    token?: string;
+    path?: string;
   };
   environmentVars?: Record<string, string>;
   framework?: string;
@@ -94,8 +115,17 @@ export interface DeploymentOption {
   name: string;
   description: string;
   features: string[];
+  pricing?: {
+    free?: boolean;
+    startingPrice?: string;
+    plans?: {
+      name: string;
+      price: string;
+      features: string[];
+    }[];
+  };
   auth: {
-    type: 'oauth' | 'api-token' | 'credentials';
+    type: AuthType;
     provider: string;
     scope?: string[];
     setupUrl?: string;
@@ -104,6 +134,8 @@ export interface DeploymentOption {
     password?: string;
     secure?: boolean;
     validationUrl?: string;
+    token?: string;
+    path?: string;
   };
   requirements: PlatformRequirements;
   docs?: {
@@ -112,16 +144,6 @@ export interface DeploymentOption {
     deployment?: string;
     troubleshooting?: string;
   };
-}
-
-// Authentication types
-export type AuthType = 'oauth' | 'api-token' | 'credentials';
-
-export interface AuthConfig {
-  type: AuthType;
-  provider: string;
-  setupUrl: string;
-  isAuthenticated: boolean;
 }
 
 // Deployment validation types

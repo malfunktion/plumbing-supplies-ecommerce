@@ -36,6 +36,17 @@ const deploymentOptions: DeploymentOption[] = [
     name: 'GitHub Pages',
     description: 'Free hosting for static websites directly from your GitHub repository',
     features: ['Static site hosting', 'GitHub integration', 'Custom domains'],
+    pricing: {
+      free: true,
+      startingPrice: '$0',
+      plans: [
+        {
+          name: 'Free',
+          price: '$0',
+          features: ['1GB storage', 'GitHub Actions minutes', 'Custom domains'],
+        },
+      ],
+    },
     auth: {
       type: 'oauth',
       provider: 'github',
@@ -53,6 +64,22 @@ const deploymentOptions: DeploymentOption[] = [
     name: 'Vercel',
     description: 'Zero-configuration deployment platform for frontend applications',
     features: ['Serverless functions', 'Edge network', 'Automatic HTTPS'],
+    pricing: {
+      free: true,
+      startingPrice: '$0',
+      plans: [
+        {
+          name: 'Hobby',
+          price: '$0',
+          features: ['Unlimited deployments', 'HTTPS', 'CI/CD'],
+        },
+        {
+          name: 'Pro',
+          price: '$20',
+          features: ['Team collaboration', 'Advanced analytics', 'Priority support'],
+        },
+      ],
+    },
     auth: {
       type: 'oauth',
       provider: 'vercel',
@@ -70,6 +97,22 @@ const deploymentOptions: DeploymentOption[] = [
     name: 'Netlify',
     description: 'All-in-one platform for automating modern web projects',
     features: ['CDN', 'Continuous deployment', 'Form handling'],
+    pricing: {
+      free: true,
+      startingPrice: '$0',
+      plans: [
+        {
+          name: 'Starter',
+          price: '$0',
+          features: ['Manual deploys', 'Basic build minutes', 'Community support'],
+        },
+        {
+          name: 'Pro',
+          price: '$19',
+          features: ['Background functions', 'Password protection', 'Priority support'],
+        },
+      ],
+    },
     auth: {
       type: 'oauth',
       provider: 'netlify',

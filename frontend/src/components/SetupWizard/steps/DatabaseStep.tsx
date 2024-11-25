@@ -59,6 +59,7 @@ const DatabaseStep: React.FC<DatabaseStepProps> = ({ data, onUpdate }) => {
     onUpdate({
       ...data,
       provider: newProvider,
+      isConnected: false,
     });
   };
 
@@ -68,6 +69,7 @@ const DatabaseStep: React.FC<DatabaseStepProps> = ({ data, onUpdate }) => {
     onUpdate({
       ...data,
       uri: newUri,
+      isConnected: false,
     });
   };
 
@@ -77,6 +79,7 @@ const DatabaseStep: React.FC<DatabaseStepProps> = ({ data, onUpdate }) => {
     onUpdate({
       ...data,
       name: newName,
+      isConnected: false,
     });
   };
 

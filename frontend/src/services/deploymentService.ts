@@ -1,4 +1,4 @@
-import { DeploymentConfig, DeploymentOption, ValidationStatus, PlatformRequirements } from '@/types/setup';
+import { DeploymentConfig, DeploymentOption, ValidationStatus, PlatformRequirements, AuthType } from '@/types/setup';
 import { Client as FTPClient } from 'basic-ftp';
 
 export const deploymentPlatforms = {
@@ -9,16 +9,17 @@ export const deploymentPlatforms = {
       description: 'Free hosting for static sites directly from your GitHub repository',
       features: ['Free forever', 'Easy GitHub integration', 'Automatic builds'],
       auth: {
-        type: 'oauth',
+        type: 'oauth' as AuthType,
         provider: 'github',
         scope: ['repo', 'workflow'],
-        setupUrl: 'https://github.com/login/oauth/authorize'
+        setupUrl: 'https://github.com/login/oauth/authorize',
+        validationUrl: 'https://api.github.com/user'
       },
       requirements: {
         minimumNodeVersion: '14.0.0',
         supportedFrameworks: ['react', 'vue', 'angular'],
         requiredEnvironmentVars: ['GITHUB_TOKEN']
-      }
+      } as PlatformRequirements
     },
     {
       id: 'vercel',
@@ -31,16 +32,17 @@ export const deploymentPlatforms = {
         'Preview Deployments'
       ],
       auth: {
-        type: 'oauth',
+        type: 'oauth' as AuthType,
         provider: 'vercel',
         scope: ['read', 'write'],
-        setupUrl: 'https://vercel.com/oauth/authorize'
+        setupUrl: 'https://vercel.com/oauth/authorize',
+        validationUrl: 'https://api.vercel.com/v1/user'
       },
       requirements: {
         minimumNodeVersion: '14.0.0',
         supportedFrameworks: ['react', 'next', 'vue', 'nuxt'],
         requiredEnvironmentVars: ['VERCEL_TOKEN']
-      }
+      } as PlatformRequirements
     },
     {
       id: 'netlify',
@@ -53,16 +55,17 @@ export const deploymentPlatforms = {
         'Forms Handling'
       ],
       auth: {
-        type: 'oauth',
+        type: 'oauth' as AuthType,
         provider: 'netlify',
         scope: ['deploy', 'sites'],
-        setupUrl: 'https://app.netlify.com/authorize'
+        setupUrl: 'https://app.netlify.com/authorize',
+        validationUrl: 'https://api.netlify.com/api/v1/user'
       },
       requirements: {
         minimumNodeVersion: '14.0.0',
         supportedFrameworks: ['react', 'vue', 'angular', 'svelte'],
         requiredEnvironmentVars: ['NETLIFY_AUTH_TOKEN']
-      }
+      } as PlatformRequirements
     },
     {
       id: 'apache',
@@ -70,43 +73,56 @@ export const deploymentPlatforms = {
       description: 'A popular open-source web server',
       features: ['Highly customizable', 'Supports multiple protocols', 'Robust security features'],
       auth: {
-        type: 'ftp',
+        type: 'credentials' as AuthType,
+        provider: 'apache',
         host: '',
         username: '',
         password: '',
-        secure: false
+        secure: false,
+        validationUrl: ''
       },
       requirements: {
         minimumNodeVersion: '14.0.0',
         supportedFrameworks: ['react', 'vue', 'angular'],
         requiredEnvironmentVars: []
-      }
+      } as PlatformRequirements
     }
-  ]
+  ] as DeploymentOption[]
 };
 
 export class DeploymentService {
   private static async validateConfig(
     config: DeploymentConfig,
     platform: DeploymentOption
-  ): ValidationStatus {
+  ): Promise<ValidationStatus> {
     const status: ValidationStatus = {
       isValid: true,
-      errors: []
+      errors: [],
+      warnings: []
     };
 
     // Check Node.js version compatibility
     const currentNode = process.version;
-    if (!this.isVersionCompatible(currentNode, platform.requirements.minimumNodeVersion)) {
+    if (platform.requirements.minimumNodeVersion && 
+        !this.isVersionCompatible(currentNode, platform.requirements.minimumNodeVersion)) {
       status.isValid = false;
       status.errors.push(`Node.js version ${platform.requirements.minimumNodeVersion} or higher is required`);
     }
 
+    // Validate framework compatibility
+    if (platform.requirements.supportedFrameworks && config.framework &&
+        !platform.requirements.supportedFrameworks.includes(config.framework)) {
+      status.isValid = false;
+      status.errors.push(`Framework '${config.framework}' is not supported. Supported frameworks: ${platform.requirements.supportedFrameworks.join(', ')}`);
+    }
+
     // Validate required environment variables
-    for (const envVar of platform.requirements.requiredEnvironmentVars) {
-      if (!process.env[envVar]) {
-        status.isValid = false;
-        status.errors.push(`Missing required environment variable: ${envVar}`);
+    if (platform.requirements.requiredEnvironmentVars) {
+      for (const envVar of platform.requirements.requiredEnvironmentVars) {
+        if (!process.env[envVar]) {
+          status.isValid = false;
+          status.errors.push(`Missing required environment variable: ${envVar}`);
+        }
       }
     }
 
@@ -121,7 +137,7 @@ export class DeploymentService {
         status.isValid = false;
         status.errors.push('Vercel token is required');
       }
-      if (config.domain && !this.isValidDomain(config.domain)) {
+      if (config.customDomain && !this.isValidDomain(config.customDomain)) {
         status.isValid = false;
         status.errors.push('Invalid custom domain format');
       }
@@ -150,7 +166,11 @@ export class DeploymentService {
 
   private static async validateAuth(platform: DeploymentOption, token: string): Promise<boolean> {
     try {
-      const response = await fetch(`https://api.${platform.auth.provider}.com/user`, {
+      if (!platform.auth.validationUrl) {
+        return true; // Skip validation if no validation URL is provided
+      }
+
+      const response = await fetch(platform.auth.validationUrl, {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.status === 200;
@@ -183,34 +203,34 @@ export class DeploymentService {
     // Platform-specific deployment
     switch (config.platform) {
       case 'github-pages':
-        return this.deployToGitHubPages(config);
+        return this.deployToGitHubPages(config, platform);
       case 'vercel':
-        return this.deployToVercel(config);
+        return this.deployToVercel(config, platform);
       case 'netlify':
-        return this.deployToNetlify(config);
+        return this.deployToNetlify(config, platform);
       case 'apache':
-        return this.deployToApache(config);
+        return this.deployToApache(config, platform);
       default:
         throw new Error(`Deployment to ${config.platform} is not implemented`);
     }
   }
 
-  private static async deployToGitHubPages(config: DeploymentConfig): Promise<boolean> {
+  private static async deployToGitHubPages(config: DeploymentConfig, platform: DeploymentOption): Promise<boolean> {
     // Implementation for GitHub Pages deployment
     return true;
   }
 
-  private static async deployToVercel(config: DeploymentConfig): Promise<boolean> {
+  private static async deployToVercel(config: DeploymentConfig, platform: DeploymentOption): Promise<boolean> {
     // Implementation for Vercel deployment
     return true;
   }
 
-  private static async deployToNetlify(config: DeploymentConfig): Promise<boolean> {
+  private static async deployToNetlify(config: DeploymentConfig, platform: DeploymentOption): Promise<boolean> {
     // Implementation for Netlify deployment
     return true;
   }
 
-  private static async deployToApache(config: DeploymentConfig): Promise<boolean> {
+  private static async deployToApache(config: DeploymentConfig, platform: DeploymentOption): Promise<boolean> {
     const client = new FTPClient();
     client.ftp.verbose = true;
 
