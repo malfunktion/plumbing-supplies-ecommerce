@@ -11,6 +11,7 @@ import {
   InputLabel,
   FormHelperText,
   styled,
+  SelectChangeEvent,
 } from '@mui/material';
 import type { DatabaseSetupData } from '@/types/setup';
 
@@ -52,8 +53,8 @@ const DatabaseStep: React.FC<DatabaseStepProps> = ({ data, onUpdate }) => {
   const [uri, setUri] = useState(data.uri || '');
   const [name, setName] = useState(data.name || '');
 
-  const handleProviderChange = (event: React.ChangeEvent<{ value: unknown }>) => {
-    const newProvider = event.target.value as string;
+  const handleProviderChange = (event: SelectChangeEvent<string>) => {
+    const newProvider = event.target.value;
     setProvider(newProvider);
     onUpdate({
       ...data,

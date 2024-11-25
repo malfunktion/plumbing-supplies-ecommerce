@@ -4,15 +4,16 @@ import {
   Typography,
   Card,
   CardContent,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   TextField,
+  Select,
+  MenuItem,
   FormControl,
-  FormLabel,
+  InputLabel,
+  FormHelperText,
   styled,
+  SelectChangeEvent,
 } from '@mui/material';
-import type { DeploymentSetupData } from '@/types/setup';
+import type { DeploymentSetupData, DeploymentOption } from '@/types/setup';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   marginTop: theme.spacing(3),
@@ -29,36 +30,80 @@ interface DeploymentStepProps {
   onUpdate: (data: DeploymentSetupData) => void;
 }
 
-const deploymentOptions = [
+const deploymentOptions: DeploymentOption[] = [
   {
-    value: 'github-pages',
-    label: 'GitHub Pages',
-    description: 'Deploy frontend to GitHub Pages with a separate backend',
+    id: 'github-pages',
+    name: 'GitHub Pages',
+    description: 'Free hosting for static websites directly from your GitHub repository',
+    features: ['Static site hosting', 'GitHub integration', 'Custom domains'],
+    auth: {
+      type: 'oauth',
+      provider: 'github',
+      scope: ['repo', 'workflow'],
+    },
+    requirements: {
+      minMemory: '512MB',
+      minStorage: '1GB',
+      minCpu: '1 core',
+      requiredEnvironmentVars: ['GITHUB_TOKEN'],
+    },
   },
   {
-    value: 'vercel',
-    label: 'Vercel',
-    description: 'Deploy both frontend and backend to Vercel',
+    id: 'vercel',
+    name: 'Vercel',
+    description: 'Zero-configuration deployment platform for frontend applications',
+    features: ['Serverless functions', 'Edge network', 'Automatic HTTPS'],
+    auth: {
+      type: 'oauth',
+      provider: 'vercel',
+      scope: ['deployments', 'projects'],
+    },
+    requirements: {
+      minMemory: '1GB',
+      minStorage: '2GB',
+      minCpu: '1 core',
+      requiredEnvironmentVars: ['VERCEL_TOKEN'],
+    },
   },
   {
-    value: 'custom',
-    label: 'Custom Deployment',
-    description: 'Configure custom deployment settings',
+    id: 'netlify',
+    name: 'Netlify',
+    description: 'All-in-one platform for automating modern web projects',
+    features: ['CDN', 'Continuous deployment', 'Form handling'],
+    auth: {
+      type: 'oauth',
+      provider: 'netlify',
+      scope: ['deploy', 'sites'],
+    },
+    requirements: {
+      minMemory: '1GB',
+      minStorage: '2GB',
+      minCpu: '1 core',
+      requiredEnvironmentVars: ['NETLIFY_AUTH_TOKEN'],
+    },
   },
 ];
 
 const DeploymentStep: React.FC<DeploymentStepProps> = ({ data, onUpdate }) => {
-  const [deployment, setDeployment] = useState(data.frontendDeployment || 'github-pages');
+  const [frontendDeployment, setFrontendDeployment] = useState(data.frontendDeployment || 'github-pages');
+  const [backendDeployment, setBackendDeployment] = useState(data.backendDeployment || 'vercel');
   const [domain, setDomain] = useState(data.domain || '');
 
-  const handleDeploymentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newDeployment = event.target.value;
-    setDeployment(newDeployment);
+  const handleFrontendDeploymentChange = (event: SelectChangeEvent<string>) => {
+    const newFrontendDeployment = event.target.value;
+    setFrontendDeployment(newFrontendDeployment);
     onUpdate({
       ...data,
-      frontendDeployment: newDeployment,
-      backendDeployment: newDeployment === 'vercel' ? 'vercel' : 'custom',
-      domain,
+      frontendDeployment: newFrontendDeployment,
+    });
+  };
+
+  const handleBackendDeploymentChange = (event: SelectChangeEvent<string>) => {
+    const newBackendDeployment = event.target.value;
+    setBackendDeployment(newBackendDeployment);
+    onUpdate({
+      ...data,
+      backendDeployment: newBackendDeployment,
     });
   };
 
@@ -77,49 +122,69 @@ const DeploymentStep: React.FC<DeploymentStepProps> = ({ data, onUpdate }) => {
         Deployment Configuration
       </Typography>
       <Typography variant="body1" paragraph>
-        Choose how you want to deploy your e-commerce platform.
+        Configure your deployment settings for both frontend and backend.
       </Typography>
 
       <StyledCard>
         <CardContent>
-          <StyledFormControl component="fieldset">
-            <FormLabel component="legend">Deployment Platform</FormLabel>
-            <RadioGroup
-              value={deployment}
-              onChange={handleDeploymentChange}
+          <StyledFormControl fullWidth>
+            <InputLabel id="frontend-deployment-label">Frontend Deployment</InputLabel>
+            <Select
+              labelId="frontend-deployment-label"
+              value={frontendDeployment}
+              label="Frontend Deployment"
+              onChange={handleFrontendDeploymentChange}
             >
               {deploymentOptions.map((option) => (
-                <FormControlLabel
-                  key={option.value}
-                  value={option.value}
-                  control={<Radio />}
-                  label={
-                    <Box>
-                      <Typography variant="subtitle1">{option.label}</Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {option.description}
-                      </Typography>
-                    </Box>
-                  }
-                />
+                <MenuItem key={option.id} value={option.id}>
+                  <Box>
+                    <Typography variant="subtitle1">{option.name}</Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {option.description}
+                    </Typography>
+                  </Box>
+                </MenuItem>
               ))}
-            </RadioGroup>
+            </Select>
+            <FormHelperText>Choose your frontend deployment platform</FormHelperText>
+          </StyledFormControl>
+
+          <StyledFormControl fullWidth>
+            <InputLabel id="backend-deployment-label">Backend Deployment</InputLabel>
+            <Select
+              labelId="backend-deployment-label"
+              value={backendDeployment}
+              label="Backend Deployment"
+              onChange={handleBackendDeploymentChange}
+            >
+              {deploymentOptions.map((option) => (
+                <MenuItem key={option.id} value={option.id}>
+                  <Box>
+                    <Typography variant="subtitle1">{option.name}</Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {option.description}
+                    </Typography>
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>Choose your backend deployment platform</FormHelperText>
           </StyledFormControl>
 
           <TextField
             fullWidth
-            label="Domain (optional)"
+            label="Custom Domain"
             variant="outlined"
             value={domain}
             onChange={handleDomainChange}
-            helperText="Enter your custom domain if you have one"
+            helperText="Enter your custom domain (optional)"
             sx={{ mt: 2 }}
           />
         </CardContent>
       </StyledCard>
 
       <Typography variant="body2" color="textSecondary">
-        You can change these settings later in the admin dashboard.
+        Make sure you have the necessary permissions and access tokens for your chosen platforms.
       </Typography>
     </Box>
   );
