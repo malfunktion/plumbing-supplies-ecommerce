@@ -1,49 +1,51 @@
 import React from 'react';
-import { ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon, InformationCircleIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
-interface AlertProps {
-  type?: 'success' | 'error' | 'warning' | 'info';
+export interface AlertProps {
+  type: 'error' | 'warning' | 'success' | 'info';
   title: string;
-  children?: React.ReactNode;
-  className?: string;
+  onClose?: () => void;
 }
+
+const alertStyles = {
+  error: 'bg-red-50 text-red-800',
+  warning: 'bg-yellow-50 text-yellow-800',
+  success: 'bg-green-50 text-green-800',
+  info: 'bg-blue-50 text-blue-800'
+};
+
+const iconStyles = {
+  error: 'text-red-400',
+  warning: 'text-yellow-400',
+  success: 'text-green-400',
+  info: 'text-blue-400'
+};
 
 export const Alert: React.FC<AlertProps> = ({
   type = 'info',
   title,
-  children,
-  className = ''
+  onClose
 }) => {
-  const icons = {
-    success: CheckCircleIcon,
-    error: XCircleIcon,
-    warning: ExclamationTriangleIcon,
-    info: InformationCircleIcon
-  };
-
-  const styles = {
-    success: 'bg-green-50 text-green-800 border-green-200',
-    error: 'bg-red-50 text-red-800 border-red-200',
-    warning: 'bg-yellow-50 text-yellow-800 border-yellow-200',
-    info: 'bg-blue-50 text-blue-800 border-blue-200'
-  };
-
-  const Icon = icons[type];
-
   return (
-    <div className={`rounded-md p-4 border ${styles[type]} ${className}`}>
+    <div className={`rounded-md p-4 ${alertStyles[type]}`}>
       <div className="flex">
-        <div className="flex-shrink-0">
-          <Icon className="h-5 w-5" aria-hidden="true" />
+        <div className="flex-1">
+          <p className="text-sm font-medium">
+            {title}
+          </p>
         </div>
-        <div className="ml-3">
-          <h3 className="text-sm font-medium">{title}</h3>
-          {children && (
-            <div className="mt-2 text-sm">
-              {children}
-            </div>
-          )}
-        </div>
+        {onClose && (
+          <div className="ml-3">
+            <button
+              type="button"
+              className={`inline-flex rounded-md p-1.5 ${iconStyles[type]} hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-offset-2`}
+              onClick={onClose}
+            >
+              <span className="sr-only">Dismiss</span>
+              <XMarkIcon className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

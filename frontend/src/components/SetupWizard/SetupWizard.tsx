@@ -30,13 +30,16 @@ const SetupWizard = () => {
       isInstalled: false
     },
     deployment: {
-      provider: '',
-      url: '',
-      isDeployed: false
+      frontendDeployment: '',
+      backendDeployment: '',
+      isConfigured: false
     }
   });
 
-  const updateSetupData = (step: keyof SetupData, data: Partial<SetupData[keyof SetupData]>) => {
+  const updateSetupData = <K extends keyof SetupData>(
+    step: K,
+    data: Partial<SetupData[K]>
+  ) => {
     setSetupData(prev => ({
       ...prev,
       [step]: { ...prev[step], ...data }
@@ -64,7 +67,7 @@ const SetupWizard = () => {
       {currentStep === 'backend' && (
         <BackendSetup
           data={setupData.backend}
-          onUpdate={(data) => updateSetupData('backend', data)}
+          onUpdate={(data: Partial<SetupData['backend']>) => updateSetupData('backend', data)}
           onNext={handleNext}
         />
       )}
@@ -72,7 +75,7 @@ const SetupWizard = () => {
       {currentStep === 'database' && (
         <DatabaseSetup
           data={setupData.database}
-          onUpdate={(data) => updateSetupData('database', data)}
+          onUpdate={(data: Partial<SetupData['database']>) => updateSetupData('database', data)}
           onNext={handleNext}
           onBack={handleBack}
         />
@@ -81,7 +84,7 @@ const SetupWizard = () => {
       {currentStep === 'admin' && (
         <AdminSetup
           data={setupData.admin}
-          onUpdate={(data) => updateSetupData('admin', data)}
+          onUpdate={(data: Partial<SetupData['admin']>) => updateSetupData('admin', data)}
           onNext={handleNext}
           onBack={handleBack}
         />
@@ -90,7 +93,7 @@ const SetupWizard = () => {
       {currentStep === 'sample-data' && (
         <SampleDataSetup
           data={setupData.sampleData}
-          onUpdate={(data) => updateSetupData('sampleData', data)}
+          onUpdate={(data: Partial<SetupData['sampleData']>) => updateSetupData('sampleData', data)}
           onNext={handleNext}
           onBack={handleBack}
         />
@@ -99,7 +102,7 @@ const SetupWizard = () => {
       {currentStep === 'deployment' && (
         <DeploymentSetup
           data={setupData.deployment}
-          onUpdate={(data) => updateSetupData('deployment', data)}
+          onUpdate={(data: Partial<SetupData['deployment']>) => updateSetupData('deployment', data)}
           onNext={handleNext}
           onBack={handleBack}
         />

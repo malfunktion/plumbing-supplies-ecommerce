@@ -4,6 +4,12 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        type: environment
+        required: true
+        default: 'github-pages'
 
 permissions:
   contents: read
@@ -12,7 +18,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -36,7 +42,7 @@ jobs:
         run: npm run build
         working-directory: frontend
         env:
-          VITE_API_URL: 'https://api.plumbing-supplies.com'
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_APP_NAME: 'Plumbing Supplies E-Commerce'
 
       - name: Setup Pages
@@ -49,7 +55,7 @@ jobs:
 
   deploy:
     environment:
-      name: github-pages
+      name: ${{ inputs.environment || 'github-pages' }}
       url: ${{ steps.deployment.outputs.page_url }}
     needs: build
     runs-on: ubuntu-latest

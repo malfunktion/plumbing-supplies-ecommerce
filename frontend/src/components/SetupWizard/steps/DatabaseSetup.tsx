@@ -1,21 +1,16 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { DatabaseSetupProps } from '@/types/setup';
 
 enum DatabaseType {
   MONGODB_ATLAS = 'MONGODB_ATLAS',
   MONGODB_LOCAL = 'MONGODB_LOCAL'
 }
 
-interface DatabaseSetupProps {
-  onNext: () => void;
-  onBack?: () => void;
-}
-
-const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ onNext, onBack }) => {
+const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ data, onUpdate, onNext, onBack }) => {
   const [dbType, setDbType] = useState<DatabaseType>(DatabaseType.MONGODB_ATLAS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   // MongoDB Atlas fields
   const [atlasUsername, setAtlasUsername] = useState('');
@@ -47,14 +42,18 @@ const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ onNext, onBack }) => {
         setAtlasPassword(password);
         setAtlasClusterUrl(clusterUrl);
         
+        const uri = `mongodb+srv://${username}:${password}@${clusterUrl}/?retryWrites=true&w=majority`;
+        onUpdate({ uri, isConnected: true });
+        
         if (includeSampleData) {
           await axios.post('/api/setup/seed-data');
         }
         
-        setSuccess(true);
+        onNext();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to connect to MongoDB Atlas');
+      onUpdate({ isConnected: false });
     }
     setLoading(false);
   };
@@ -71,7 +70,7 @@ const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ onNext, onBack }) => {
       const response = await axios.post('/api/setup/test-database', { uri });
       
       if (response.data.success) {
-        setSuccess(true);
+        onUpdate({ uri, isConnected: true });
         // Save the connection details securely
         await axios.post('/api/setup/save-config', {
           type: dbType,
@@ -79,9 +78,11 @@ const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ onNext, onBack }) => {
           atlasOrgId: atlasOrgId || undefined,
           atlasProjectName: atlasProjectName || undefined
         });
+        onNext();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to test connection');
+      onUpdate({ isConnected: false });
     }
     setLoading(false);
   };
@@ -240,42 +241,31 @@ const DatabaseSetup: React.FC<DatabaseSetupProps> = ({ onNext, onBack }) => {
           )}
 
           {error && (
-            <div className="text-red-600 text-sm p-2 bg-red-50 rounded">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="text-green-600 text-sm p-2 bg-green-50 rounded">
-              Successfully connected to database!
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="text-sm text-red-700">{error}</div>
             </div>
           )}
 
           <div className="flex justify-between pt-4">
             {onBack && (
               <button
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                 onClick={onBack}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                disabled={loading}
               >
                 Back
               </button>
             )}
-            <div className="space-x-4">
+
+            {!showAdvanced && (
               <button
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 onClick={handleTestConnection}
-                disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                disabled={loading || !atlasUsername || !atlasPassword || !atlasClusterUrl}
               >
-                {loading ? 'Testing...' : 'Test Connection'}
+                {loading ? 'Testing Connection...' : 'Test Connection & Continue'}
               </button>
-              <button
-                onClick={onNext}
-                disabled={!success}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>

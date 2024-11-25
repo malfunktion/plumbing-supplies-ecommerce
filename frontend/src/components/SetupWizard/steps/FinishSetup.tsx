@@ -1,27 +1,6 @@
-interface FinishSetupProps {
-  setupData: {
-    database: {
-      uri: string;
-      isConnected: boolean;
-    };
-    admin: {
-      email: string;
-      isCreated: boolean;
-    };
-    sampleData: {
-      install: boolean;
-      isInstalled: boolean;
-    };
-    deployment: {
-      frontendDeployment: string;
-      backendDeployment: string;
-      isConfigured: boolean;
-    };
-  };
-  onNext: () => void;
-}
+import { FinishSetupProps } from '@/types/setup';
 
-const FinishSetup: React.FC<FinishSetupProps> = ({ setupData, onNext }) => {
+const FinishSetup: React.FC<FinishSetupProps> = ({ setupData, onNext, onBack }) => {
   const getDeploymentInstructions = () => {
     const instructions: string[] = [];
     
@@ -104,13 +83,23 @@ const FinishSetup: React.FC<FinishSetupProps> = ({ setupData, onNext }) => {
         </div>
       </div>
 
-      <button
-        type="button"
-        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full"
-        onClick={onNext}
-      >
-        Finish Setup
-      </button>
+      <div className="flex justify-between">
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          Back
+        </button>
+
+        <button
+          type="button"
+          onClick={onNext}
+          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Go to Dashboard
+        </button>
+      </div>
     </div>
   );
 };

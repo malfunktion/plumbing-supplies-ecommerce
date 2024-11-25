@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Card, RadioGroup, Button, Alert } from '@/components/ui';
+import { DeploymentSetupProps } from '@/types/setup';
 
 interface DeploymentOption {
   id: string;
@@ -12,260 +13,136 @@ interface DeploymentOption {
   limitations: string[];
 }
 
-interface DeploymentSetupProps {
-  data: {
-    frontendDeployment: string;
-    backendDeployment: string;
-    isConfigured: boolean;
-  };
-  onUpdate: (data: Partial<{
-    frontendDeployment: string;
-    backendDeployment: string;
-    isConfigured: boolean;
-  }>) => void;
-  onNext: () => void;
-}
-
 const deploymentOptions: DeploymentOption[] = [
   {
     id: 'github-pages',
     name: 'GitHub Pages',
+    description: 'Free static site hosting by GitHub',
     type: 'frontend',
-    description: 'Host your frontend directly from your GitHub repository',
-    requirements: ['GitHub account'],
+    requirements: ['GitHub account', 'Git repository'],
     setupSteps: [
       'Enable GitHub Pages in repository settings',
-      'Add homepage to package.json',
-      'Setup GitHub Actions workflow'
+      'Configure GitHub Actions workflow',
+      'Push your code to main branch'
     ],
     freeFeatures: [
-      'Unlimited static site hosting',
+      'Free hosting',
       'Custom domain support',
-      'SSL/HTTPS included',
-      'GitHub Actions integration'
+      'SSL certificates',
+      'CDN delivery'
     ],
     limitations: [
-      'Only static content',
-      'Build time limited to 10 minutes'
-    ]
-  },
-  {
-    id: 'netlify',
-    name: 'Netlify',
-    type: 'frontend',
-    description: 'Popular static site hosting with great features',
-    requirements: ['GitHub account'],
-    setupSteps: [
-      'Connect with GitHub',
-      'Select repository',
-      'Configure build settings'
-    ],
-    freeFeatures: [
-      '100GB bandwidth/month',
-      'Custom domain support',
-      'SSL/HTTPS included',
-      'Form handling',
-      'Continuous deployment'
-    ],
-    limitations: [
-      'Build time limited to 300 minutes/month',
-      'Limited serverless function calls'
-    ]
-  },
-  {
-    id: 'cyclic',
-    name: 'Cyclic',
-    type: 'backend',
-    description: 'AWS-powered backend hosting with MongoDB integration',
-    requirements: ['GitHub account'],
-    setupSteps: [
-      'Connect with GitHub',
-      'Select repository',
-      'Configure environment variables'
-    ],
-    freeFeatures: [
-      '10GB bandwidth/month',
-      'No sleep time',
-      'MongoDB integration',
-      'Custom domain support',
-      'SSL/HTTPS included'
-    ],
-    limitations: [
-      'Limited to 512MB storage',
-      'Maximum 5 services per account'
-    ]
-  },
-  {
-    id: 'glitch',
-    name: 'Glitch',
-    type: 'backend',
-    description: 'Easy-to-use platform for quick backend deployment',
-    requirements: ['Email account'],
-    setupSteps: [
-      'Create Glitch account',
-      'Import from GitHub',
-      'Configure environment'
-    ],
-    freeFeatures: [
-      '1000 hours/month',
-      'Instant deployment',
-      'Custom domain support',
-      'SSL/HTTPS included'
-    ],
-    limitations: [
-      'Sleeps after 5 minutes inactive',
-      'Limited to 512MB storage',
-      'Shared CPU resources'
+      'Static content only',
+      'Limited to public repositories for free tier'
     ]
   },
   {
     id: 'railway',
     name: 'Railway',
+    description: 'Zero-configuration deployment platform',
     type: 'backend',
-    description: 'Developer platform with great performance',
     requirements: ['GitHub account'],
     setupSteps: [
-      'Connect with GitHub',
-      'Select repository',
-      'Configure deployment'
+      'Connect your GitHub account',
+      'Select your repository',
+      'Configure environment variables'
     ],
     freeFeatures: [
-      '500 hours/month',
-      'Shared CPU',
-      'Custom domain support',
-      'SSL/HTTPS included'
+      'Automatic deployments',
+      'Custom domains',
+      'SSL certificates',
+      'Database support'
     ],
     limitations: [
-      'Limited to 512MB RAM',
-      'Limited to 1GB storage',
-      'Shared CPU resources'
+      'Limited free tier resources',
+      'Usage-based pricing after free tier'
     ]
   }
 ];
 
-export const DeploymentSetup: React.FC<DeploymentSetupProps> = ({
-  data,
-  onUpdate,
-  onNext
-}) => {
+export const DeploymentSetup = ({ data, onUpdate, onNext, onBack }: DeploymentSetupProps) => {
   const [error, setError] = useState('');
 
-  const handleContinue = () => {
+  const handleFrontendDeploymentChange = (value: string) => {
+    onUpdate({ frontendDeployment: value });
+  };
+
+  const handleBackendDeploymentChange = (value: string) => {
+    onUpdate({ backendDeployment: value });
+  };
+
+  const handleSubmit = () => {
     if (!data.frontendDeployment || !data.backendDeployment) {
       setError('Please select both frontend and backend deployment options');
       return;
     }
-
     onUpdate({ isConfigured: true });
     onNext();
   };
 
-  const frontendOptions = deploymentOptions.filter(opt => opt.type === 'frontend');
-  const backendOptions = deploymentOptions.filter(opt => opt.type === 'backend');
-
-  const handleFrontendChange = (value: string) => {
-    onUpdate({ frontendDeployment: value });
-  };
-
-  const handleBackendChange = (value: string) => {
-    onUpdate({ backendDeployment: value });
-  };
-
-  const renderDeploymentGroup = (
-    options: DeploymentOption[],
-    selected: string,
-    onChange: (value: string) => void,
-    title: string
-  ) => (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <RadioGroup
-        value={selected}
-        onChange={onChange}
-        className="space-y-4"
-      >
-        {options.map(option => (
-          <Card
-            key={option.id}
-            className={`p-4 cursor-pointer ${
-              selected === option.id ? 'ring-2 ring-primary' : ''
-            }`}
-            onClick={() => onChange(option.id)}
-          >
-            <div className="flex items-start space-x-4">
-              <RadioGroup.Item value={option.id} />
-              <div className="flex-1">
-                <h4 className="font-medium">{option.name}</h4>
-                <p className="text-sm text-gray-600">{option.description}</p>
-                
-                <div className="mt-3 space-y-2">
-                  <div>
-                    <h5 className="text-sm font-medium">Features:</h5>
-                    <ul className="text-sm text-gray-600 list-disc list-inside">
-                      {option.freeFeatures.map((feature, i) => (
-                        <li key={i}>{feature}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div>
-                    <h5 className="text-sm font-medium">Limitations:</h5>
-                    <ul className="text-sm text-gray-600 list-disc list-inside">
-                      {option.limitations.map((limitation, i) => (
-                        <li key={i}>{limitation}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div>
-                    <h5 className="text-sm font-medium">Setup Steps:</h5>
-                    <ol className="text-sm text-gray-600 list-decimal list-inside">
-                      {option.setupSteps.map((step, i) => (
-                        <li key={i}>{step}</li>
-                      ))}
-                    </ol>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </RadioGroup>
-    </div>
-  );
-
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold">Deployment Configuration</h2>
-        <p className="text-gray-600">
-          Choose where to host your frontend and backend. All options below are completely free and don't require a credit card.
+      <div>
+        <h2 className="text-lg font-medium mb-4">Deployment Configuration</h2>
+        <p className="mt-1 text-gray-600">
+          Configure how you want to deploy your application.
         </p>
       </div>
 
-      {error && (
-        <Alert variant="error" onClose={() => setError('')}>
-          {error}
-        </Alert>
-      )}
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Frontend Deployment</label>
+          <RadioGroup
+            name="frontend-deployment"
+            value={data.frontendDeployment}
+            onChange={handleFrontendDeploymentChange}
+            options={deploymentOptions
+              .filter(opt => opt.type === 'frontend')
+              .map(opt => ({
+                id: opt.id,
+                label: opt.name,
+                value: opt.id,
+                description: opt.description
+              }))}
+          />
+        </div>
 
-      {renderDeploymentGroup(
-        frontendOptions,
-        data.frontendDeployment,
-        handleFrontendChange,
-        'Frontend Deployment'
-      )}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Backend Deployment</label>
+          <RadioGroup
+            name="backend-deployment"
+            value={data.backendDeployment}
+            onChange={handleBackendDeploymentChange}
+            options={deploymentOptions
+              .filter(opt => opt.type === 'backend')
+              .map(opt => ({
+                id: opt.id,
+                label: opt.name,
+                value: opt.id,
+                description: opt.description
+              }))}
+          />
+        </div>
 
-      {renderDeploymentGroup(
-        backendOptions,
-        data.backendDeployment,
-        handleBackendChange,
-        'Backend Deployment'
-      )}
+        {error && (
+          <Alert type="error" title={error} />
+        )}
 
-      <Button onClick={handleContinue} className="w-full">
-        Continue
-      </Button>
+        <div className="flex justify-between pt-4">
+          <Button
+            variant="secondary"
+            onClick={onBack}
+          >
+            Back
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!data.frontendDeployment || !data.backendDeployment}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
