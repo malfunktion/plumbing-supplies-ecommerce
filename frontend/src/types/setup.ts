@@ -19,6 +19,7 @@ export interface DatabaseSetupData {
   uri: string;
   name: string;
   provider: string;
+  isConnected: boolean;
 }
 
 // Admin setup types
@@ -77,6 +78,14 @@ export interface DeploymentConfig {
   outputDir?: string;
   customDomain?: string;
   nodeVersion?: string;
+  branch?: string;
+  autoScaling?: {
+    enabled: boolean;
+    minInstances?: number;
+    maxInstances?: number;
+    targetCpuUtilization?: number;
+    targetMemoryUtilization?: number;
+  };
 }
 
 // Deployment option types
@@ -97,6 +106,12 @@ export interface DeploymentOption {
     validationUrl?: string;
   };
   requirements: PlatformRequirements;
+  docs?: {
+    setup?: string;
+    configuration?: string;
+    deployment?: string;
+    troubleshooting?: string;
+  };
 }
 
 // Authentication types
