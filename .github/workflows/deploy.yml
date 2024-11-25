@@ -3,82 +3,54 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'frontend/**'
-      - '.github/workflows/deploy.yml'
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy to'
-        type: environment
-        required: true
-        default: 'github-pages'
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: frontend/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type check
-        run: npm run type-check || echo "Type check failed but continuing"
+      - name: Install Dependencies
+        run: |
+          cd frontend
+          npm ci
 
       - name: Build
-        run: npm run build
+        run: |
+          cd frontend
+          npm run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_APP_NAME: 'Plumbing Supplies E-Commerce'
-          NODE_ENV: production
+          VITE_APP_NAME: "Plumbing Supplies E-Commerce"
+          VITE_DEPLOYMENT_PLATFORM: github-pages
+          VITE_BASE_URL: /plumbing-supplies-ecommerce
+          VITE_SETUP_ENABLED: true
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v3
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
           path: frontend/dist
 
-  deploy:
-    environment:
-      name: ${{ inputs.environment || 'github-pages' }}
-      url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v3
-        with:
-          timeout: 600000  # 10 minutes
-          error_count: 10  # Number of retries
+        uses: actions/deploy-pages@v2

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import Product, { IProduct } from '../models/Product';
+import { ValidationError } from 'mongoose';
 
 class ProductController {
   // Create a new product
@@ -10,121 +11,225 @@ class ProductController {
       const savedProduct = await newProduct.save();
       
       res.status(201).json({
+        success: true,
         message: 'Product created successfully',
-        product: savedProduct
+        data: savedProduct
       });
     } catch (error) {
-      res.status(400).json({
+      if (error instanceof ValidationError) {
+        return res.status(400).json({
+          success: false,
+          message: 'Validation error',
+          errors: Object.values(error.errors).map(err => ({
+            field: err.path,
+            message: err.message
+          }))
+        });
+      }
+      
+      res.status(500).json({
+        success: false,
         message: 'Error creating product',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
 
-  // Get all products
+  // Get all products with filtering, pagination, and sorting
   async getAllProducts(req: Request, res: Response) {
     try {
       const { 
         category, 
         minPrice, 
         maxPrice, 
+        search,
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
         page = 1, 
         limit = 10 
       } = req.query;
 
       const filter: any = {};
       
+      // Apply filters
       if (category) filter.category = category;
-      if (minPrice) filter.price = { $gte: Number(minPrice) };
-      if (maxPrice) filter.price = { 
-        ...filter.price, 
-        $lte: Number(maxPrice) 
-      };
+      if (minPrice || maxPrice) {
+        filter.price = {};
+        if (minPrice) filter.price.$gte = Number(minPrice);
+        if (maxPrice) filter.price.$lte = Number(maxPrice);
+      }
+      if (search) {
+        filter.$or = [
+          { name: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } }
+        ];
+      }
 
-      const products = await Product.find(filter)
-        .skip((Number(page) - 1) * Number(limit))
-        .limit(Number(limit))
-        .sort({ createdAt: -1 });
+      // Validate pagination params
+      const pageNum = Math.max(1, Number(page));
+      const limitNum = Math.min(50, Math.max(1, Number(limit))); // Max 50 items per page
 
-      const total = await Product.countDocuments(filter);
+      // Build sort object
+      const sortOptions: any = {};
+      sortOptions[String(sortBy)] = sortOrder === 'desc' ? -1 : 1;
+
+      const [products, total] = await Promise.all([
+        Product.find(filter)
+          .skip((pageNum - 1) * limitNum)
+          .limit(limitNum)
+          .sort(sortOptions)
+          .select('-__v'),
+        Product.countDocuments(filter)
+      ]);
+
+      const totalPages = Math.ceil(total / limitNum);
 
       res.json({
-        products,
-        totalPages: Math.ceil(total / Number(limit)),
-        currentPage: Number(page)
+        success: true,
+        data: {
+          products,
+          pagination: {
+            total,
+            totalPages,
+            currentPage: pageNum,
+            limit: limitNum,
+            hasNextPage: pageNum < totalPages,
+            hasPrevPage: pageNum > 1
+          }
+        }
       });
     } catch (error) {
       res.status(500).json({
+        success: false,
         message: 'Error fetching products',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
 
-  // Get a single product by SKU
-  async getProductBySku(req: Request, res: Response) {
+  // Get product by ID
+  async getProductById(req: Request, res: Response) {
     try {
-      const { sku } = req.params;
-      const product = await Product.findOne({ sku });
-
+      const product = await Product.findById(req.params.id).select('-__v');
+      
       if (!product) {
-        return res.status(404).json({ message: 'Product not found' });
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
       }
 
-      res.json(product);
+      res.json({
+        success: true,
+        data: product
+      });
     } catch (error) {
       res.status(500).json({
+        success: false,
         message: 'Error fetching product',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
 
-  // Update a product
+  // Update product
   async updateProduct(req: Request, res: Response) {
     try {
-      const { sku } = req.params;
-      const updateData = req.body;
-
-      const updatedProduct = await Product.findOneAndUpdate(
-        { sku }, 
-        updateData, 
+      const updatedProduct = await Product.findByIdAndUpdate(
+        req.params.id,
+        { $set: req.body },
         { new: true, runValidators: true }
-      );
+      ).select('-__v');
 
       if (!updatedProduct) {
-        return res.status(404).json({ message: 'Product not found' });
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
       }
 
       res.json({
+        success: true,
         message: 'Product updated successfully',
-        product: updatedProduct
+        data: updatedProduct
       });
     } catch (error) {
-      res.status(400).json({
+      if (error instanceof ValidationError) {
+        return res.status(400).json({
+          success: false,
+          message: 'Validation error',
+          errors: Object.values(error.errors).map(err => ({
+            field: err.path,
+            message: err.message
+          }))
+        });
+      }
+
+      res.status(500).json({
+        success: false,
         message: 'Error updating product',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   }
 
-  // Delete a product
+  // Delete product
   async deleteProduct(req: Request, res: Response) {
     try {
-      const { sku } = req.params;
-      const deletedProduct = await Product.findOneAndDelete({ sku });
-
+      const deletedProduct = await Product.findByIdAndDelete(req.params.id);
+      
       if (!deletedProduct) {
-        return res.status(404).json({ message: 'Product not found' });
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found'
+        });
       }
 
       res.json({
+        success: true,
         message: 'Product deleted successfully',
-        product: deletedProduct
+        data: deletedProduct
       });
     } catch (error) {
       res.status(500).json({
+        success: false,
         message: 'Error deleting product',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  // Bulk operations
+  async bulkUpdateProducts(req: Request, res: Response) {
+    try {
+      const { products } = req.body;
+      
+      if (!Array.isArray(products)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Products must be an array'
+        });
+      }
+
+      const updates = products.map(product => ({
+        updateOne: {
+          filter: { _id: product._id },
+          update: { $set: product },
+          upsert: false
+        }
+      }));
+
+      const result = await Product.bulkWrite(updates);
+
+      res.json({
+        success: true,
+        message: 'Products updated successfully',
+        data: result
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Error updating products',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }

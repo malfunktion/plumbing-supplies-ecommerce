@@ -1,5 +1,12 @@
 // Setup step types
-export type SetupStep = 'backend' | 'database' | 'admin' | 'sample-data' | 'deployment' | 'finish';
+export interface SetupStep {
+  id: string;
+  title: string;
+  description: string;
+  isCompleted: boolean;
+  isOptional?: boolean;
+  data?: any;
+}
 
 // Backend setup types
 export interface BackendSetupData {
@@ -10,8 +17,8 @@ export interface BackendSetupData {
 // Database setup types
 export interface DatabaseSetupData {
   uri: string;
-  isConnected: boolean;
-  includeSampleData?: boolean;
+  name: string;
+  provider: string;
 }
 
 // Admin setup types
@@ -36,12 +43,15 @@ export interface ValidationStatus {
 
 // Deployment config types
 export interface DeploymentConfig {
-  nodeVersion?: string;
-  framework?: string;
-  buildCommand?: string;
-  outputDir?: string;
-  customDomain?: string;
-  environmentVars?: Record<string, string>;
+  provider: string;
+  region?: string;
+  environment: 'development' | 'staging' | 'production';
+  platform?: string;
+  resources: {
+    memory: string;
+    storage: string;
+    cpu: string;
+  };
 }
 
 // Deployment option types
@@ -54,15 +64,17 @@ export interface DeploymentOption {
     type: 'oauth' | 'api-token' | 'credentials';
     provider: string;
     scope?: string[];
-    setupUrl: string;
-    validationUrl?: string;
+    setupUrl?: string;
+    host?: string;
+    username?: string;
+    password?: string;
+    secure?: boolean;
   };
   requirements: {
-    minimumNodeVersion?: string;
-    supportedFrameworks?: string[];
+    minMemory?: string;
+    minStorage?: string;
+    minCpu?: string;
     requiredEnvironmentVars?: string[];
-    maximumDeploySize?: number;
-    maximumBuildDuration?: number;
   };
 }
 
@@ -73,7 +85,6 @@ export interface AuthConfig {
   type: AuthType;
   provider: string;
   setupUrl: string;
-  token?: string;
   isAuthenticated: boolean;
 }
 
@@ -88,12 +99,7 @@ export interface DeploymentValidation {
 export interface DeploymentSetupData {
   frontendDeployment: string;
   backendDeployment: string;
-  frontendConfig: DeploymentConfig;
-  backendConfig: DeploymentConfig;
-  frontendAuth?: AuthConfig;
-  backendAuth?: AuthConfig;
-  validation?: DeploymentValidation;
-  isConfigured: boolean;
+  domain: string;
 }
 
 // Combined setup data

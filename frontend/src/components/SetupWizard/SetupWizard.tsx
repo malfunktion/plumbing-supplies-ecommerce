@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { useTheme } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Stepper,
@@ -9,15 +7,15 @@ import {
   Typography,
   Container,
   Paper,
+  Button,
   styled,
 } from '@mui/material';
-import { DatabaseSetup } from './steps/DatabaseSetup';
-import { AdminSetup } from './steps/AdminSetup';
-import { SampleDataSetup } from './steps/SampleDataSetup';
-import { DeploymentSetup } from './steps/DeploymentSetup';
-import { BackendSetup } from './steps/BackendSetup';
-import { FinishSetup } from './steps/FinishSetup';
-import type { SetupStep, SetupData } from '@/types/setup';
+import { useNavigate } from 'react-router-dom';
+import WelcomeStep from './steps/WelcomeStep';
+import DeploymentStep from './steps/DeploymentStep';
+import DatabaseStep from './steps/DatabaseStep';
+import FinishStep from './steps/FinishStep';
+import type { SetupStep, DeploymentSetupData, DatabaseSetupData } from '@/types/setup';
 
 const StyledContainer = styled(Container)(({ theme }) => ({
   paddingTop: theme.spacing(4),
@@ -33,163 +31,137 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 
 const StyledStepper = styled(Stepper)(({ theme }) => ({
   marginBottom: theme.spacing(4),
-  '& .MuiStepLabel-root': {
-    '& .MuiStepLabel-label': {
-      color: theme.palette.text.secondary,
-      '&.Mui-active': {
-        color: theme.palette.primary.main,
-        fontWeight: 600,
-      },
-      '&.Mui-completed': {
-        color: theme.palette.success.main,
-      },
-    },
-    '& .MuiStepIcon-root': {
-      '&.Mui-active': {
-        color: theme.palette.primary.main,
-      },
-      '&.Mui-completed': {
-        color: theme.palette.success.main,
-      },
-    },
-  },
 }));
 
-const steps: Array<{ label: string; key: SetupStep }> = [
-  { label: 'Backend Setup', key: 'backend' },
-  { label: 'Database Configuration', key: 'database' },
-  { label: 'Admin Setup', key: 'admin' },
-  { label: 'Sample Data Setup', key: 'sample-data' },
-  { label: 'Deployment Configuration', key: 'deployment' },
-  { label: 'Finish Setup', key: 'finish' }
+const steps: SetupStep[] = [
+  {
+    id: 'welcome',
+    title: 'Welcome',
+    description: 'Welcome to the Plumbing Supplies E-Commerce setup wizard',
+    isCompleted: false,
+  },
+  {
+    id: 'deployment',
+    title: 'Deployment',
+    description: 'Configure your deployment settings',
+    isCompleted: false,
+  },
+  {
+    id: 'database',
+    title: 'Database',
+    description: 'Set up your database connection',
+    isCompleted: false,
+  },
+  {
+    id: 'finish',
+    title: 'Finish',
+    description: 'Complete the setup process',
+    isCompleted: false,
+  },
 ];
 
-export const SetupWizard: React.FC = () => {
-  const theme = useTheme();
+const SetupWizard: React.FC = () => {
   const navigate = useNavigate();
   const [activeStep, setActiveStep] = useState(0);
-  const [setupData, setSetupData] = useState<SetupData>({
-    backend: {
-      url: '',
-      isConnected: false
-    },
-    database: {
-      uri: '',
-      isConnected: false
-    },
-    admin: {
-      email: '',
-      password: '',
-      isCreated: false
-    },
-    sampleData: {
-      install: false,
-      isInstalled: false
-    },
-    deployment: {
-      frontendDeployment: '',
-      backendDeployment: '',
-      frontendConfig: {},
-      backendConfig: {},
-      validation: {
-        isValid: false,
-        errors: [],
-        warnings: []
-      },
-      isConfigured: false
-    }
-  });
+  const [setupData, setSetupData] = useState<{
+    deployment?: DeploymentSetupData;
+    database?: DatabaseSetupData;
+  }>({});
 
   const handleNext = () => {
-    setActiveStep((prevStep) => prevStep + 1);
+    if (activeStep === steps.length - 1) {
+      // Complete setup
+      navigate('/');
+    } else {
+      setActiveStep((prev) => prev + 1);
+    }
   };
 
   const handleBack = () => {
-    setActiveStep((prevStep) => prevStep - 1);
+    setActiveStep((prev) => prev - 1);
   };
 
-  const handleUpdate = (stepData: Partial<SetupData>) => {
-    setSetupData((prevData) => ({
-      ...prevData,
-      ...stepData,
+  const handleDeploymentUpdate = (data: DeploymentSetupData) => {
+    setSetupData((prev) => ({
+      ...prev,
+      deployment: data,
+    }));
+  };
+
+  const handleDatabaseUpdate = (data: DatabaseSetupData) => {
+    setSetupData((prev) => ({
+      ...prev,
+      database: data,
     }));
   };
 
   const getCurrentStep = () => {
-    const currentStepKey = steps[activeStep].key;
-
-    switch (currentStepKey) {
-      case 'backend':
+    switch (activeStep) {
+      case 0:
+        return <WelcomeStep />;
+      case 1:
         return (
-          <BackendSetup
-            data={setupData.backend}
-            onUpdate={(data) => handleUpdate({ backend: data })}
-            onNext={handleNext}
-            onBack={handleBack}
+          <DeploymentStep
+            data={setupData.deployment || {
+              frontendDeployment: '',
+              backendDeployment: '',
+              domain: '',
+            }}
+            onUpdate={handleDeploymentUpdate}
           />
         );
-      case 'database':
+      case 2:
         return (
-          <DatabaseSetup
-            data={setupData.database}
-            onUpdate={(data) => handleUpdate({ database: data })}
-            onNext={handleNext}
-            onBack={handleBack}
+          <DatabaseStep
+            data={setupData.database || {
+              uri: '',
+              name: '',
+              provider: '',
+            }}
+            onUpdate={handleDatabaseUpdate}
           />
         );
-      case 'admin':
-        return (
-          <AdminSetup
-            data={setupData.admin}
-            onUpdate={(data) => handleUpdate({ admin: data })}
-            onNext={handleNext}
-            onBack={handleBack}
-          />
-        );
-      case 'sample-data':
-        return (
-          <SampleDataSetup
-            data={setupData.sampleData}
-            onUpdate={(data) => handleUpdate({ sampleData: data })}
-            onNext={handleNext}
-            onBack={handleBack}
-          />
-        );
-      case 'deployment':
-        return (
-          <DeploymentSetup
-            data={setupData.deployment}
-            onUpdate={(data) => handleUpdate({ deployment: data })}
-            onNext={handleNext}
-            onBack={handleBack}
-          />
-        );
-      case 'finish':
-        return (
-          <FinishSetup
-            data={setupData}
-            onBack={handleBack}
-            onComplete={() => navigate('/')}
-          />
-        );
+      case 3:
+        return <FinishStep />;
       default:
         return null;
     }
   };
 
   return (
-    <StyledContainer maxWidth="lg">
+    <StyledContainer maxWidth="md">
       <StyledPaper>
-        <StyledStepper activeStep={activeStep} alternativeLabel>
-          {steps.map(({ label }) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
+        <Typography variant="h4" gutterBottom>
+          Setup Wizard
+        </Typography>
+        <StyledStepper activeStep={activeStep}>
+          {steps.map((step) => (
+            <Step key={step.id} completed={step.isCompleted}>
+              <StepLabel>{step.title}</StepLabel>
             </Step>
           ))}
         </StyledStepper>
-
-        {getCurrentStep()}
+        <Box mt={4}>
+          {getCurrentStep()}
+          <Box mt={4} display="flex" justifyContent="space-between">
+            <Button
+              onClick={handleBack}
+              disabled={activeStep === 0}
+            >
+              Back
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleNext}
+            >
+              {activeStep === steps.length - 1 ? 'Finish' : 'Next'}
+            </Button>
+          </Box>
+        </Box>
       </StyledPaper>
     </StyledContainer>
   );
 };
+
+export default SetupWizard;

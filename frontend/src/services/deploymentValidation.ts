@@ -20,6 +20,32 @@ export const deploymentPlatforms = {
       }
     },
     {
+      id: 'apache',
+      name: 'Apache Server',
+      description: 'Deploy to your own Apache web server',
+      features: [
+        'Full control over hosting',
+        'Custom server configuration',
+        'Direct file upload',
+        'Support for .htaccess'
+      ],
+      auth: {
+        type: 'ftp',
+        provider: 'custom',
+        fields: [
+          { name: 'host', label: 'FTP Host' },
+          { name: 'username', label: 'FTP Username' },
+          { name: 'password', label: 'FTP Password', type: 'password' },
+          { name: 'path', label: 'Server Path', default: '/public_html' }
+        ]
+      },
+      requirements: {
+        minimumApacheVersion: '2.4.0',
+        supportedProtocols: ['ftp', 'sftp'],
+        requiredModules: ['mod_rewrite']
+      }
+    },
+    {
       id: 'vercel',
       name: 'Vercel',
       description: 'Zero-config deployments for static and JAMstack sites',

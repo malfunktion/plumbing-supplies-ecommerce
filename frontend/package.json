@@ -12,20 +12,25 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@mui/material": "^5.14.15",
+    "@headlessui/react": "^1.7.17",
+    "@heroicons/react": "^2.0.18",
     "@mui/icons-material": "^5.14.15",
+    "@mui/material": "^5.14.15",
+    "axios": "^1.6.2",
+    "basic-ftp": "^5.0.5",
+    "clsx": "^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.20.1",
-    "@headlessui/react": "^1.7.17",
-    "@heroicons/react": "^2.0.18",
-    "axios": "^1.6.2",
-    "clsx": "^2.0.0"
+    "recharts": "^2.13.3"
   },
   "devDependencies": {
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@vitejs/plugin-react-swc": "^3.5.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
     "typescript": "^5.2.2",
     "vite": "^5.0.0"
   }

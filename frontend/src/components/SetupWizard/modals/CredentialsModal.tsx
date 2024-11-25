@@ -1,181 +1,101 @@
-import React from 'react';
-import { useTheme } from '@mui/material/styles';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
   Button,
-  Typography,
-  styled,
+  TextField,
+  Alert,
   Box,
 } from '@mui/material';
-
-const StyledDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialog-paper': {
-    borderRadius: theme.shape.borderRadius,
-    padding: theme.spacing(2),
-  },
-}));
-
-const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
-  color: theme.palette.primary.main,
-  '& .MuiTypography-root': {
-    fontWeight: 600,
-  },
-}));
-
-const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
-  padding: theme.spacing(2),
-  '& .MuiTextField-root': {
-    marginTop: theme.spacing(2),
-    marginBottom: theme.spacing(1),
-  },
-}));
-
-const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
-  padding: theme.spacing(2),
-  '& .MuiButton-root': {
-    margin: theme.spacing(0, 1),
-  },
-}));
-
-interface Credentials {
-  username: string;
-  password: string;
-}
 
 interface CredentialsModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (credentials: Credentials) => void;
-  platformName: string;
+  onSubmit: (credentials: Record<string, string>) => void;
+  fields: Array<{
+    name: string;
+    label: string;
+    type?: string;
+    default?: string;
+  }>;
+  title?: string;
 }
 
 export const CredentialsModal: React.FC<CredentialsModalProps> = ({
   open,
   onClose,
   onSubmit,
-  platformName,
+  fields,
+  title = 'Enter Credentials',
 }) => {
-  const [username, setUsername] = React.useState('');
-  const [password, setPassword] = React.useState('');
-  const [errors, setErrors] = React.useState({
-    username: '',
-    password: '',
-  });
-
-  const validateForm = () => {
-    const newErrors = {
-      username: '',
-      password: '',
-    };
-
-    if (!username.trim()) {
-      newErrors.username = 'Username is required';
-    }
-    if (!password.trim()) {
-      newErrors.password = 'Password is required';
-    }
-
-    setErrors(newErrors);
-    return !newErrors.username && !newErrors.password;
-  };
+  const [credentials, setCredentials] = useState<Record<string, string>>(
+    fields.reduce((acc, field) => ({
+      ...acc,
+      [field.name]: field.default || '',
+    }), {})
+  );
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = () => {
-    if (validateForm()) {
-      onSubmit({ username, password });
-      handleClose();
-    }
-  };
+    // Validate all fields are filled
+    const missingFields = fields
+      .filter(field => !credentials[field.name])
+      .map(field => field.label);
 
-  const handleClose = () => {
-    setUsername('');
-    setPassword('');
-    setErrors({
-      username: '',
-      password: '',
-    });
-    onClose();
+    if (missingFields.length > 0) {
+      setError(`Please fill in: ${missingFields.join(', ')}`);
+      return;
+    }
+
+    setError(null);
+    onSubmit(credentials);
   };
 
   return (
-    <StyledDialog
-      open={open}
-      onClose={handleClose}
-      maxWidth="sm"
-      fullWidth
-    >
-      <StyledDialogTitle>
-        <Typography variant="h6">
-          Enter {platformName} Credentials
-        </Typography>
-      </StyledDialogTitle>
-
-      <StyledDialogContent>
-        <Typography variant="body1" color="text.secondary" gutterBottom>
-          Please enter your {platformName} credentials to authenticate the deployment.
-        </Typography>
-
-        <TextField
-          fullWidth
-          label="Username"
-          variant="outlined"
-          value={username}
-          onChange={(e) => {
-            setUsername(e.target.value);
-            setErrors((prev) => ({ ...prev, username: '' }));
-          }}
-          error={!!errors.username}
-          helperText={errors.username}
-          autoFocus
-        />
-
-        <TextField
-          fullWidth
-          label="Password"
-          variant="outlined"
-          type="password"
-          value={password}
-          onChange={(e) => {
-            setPassword(e.target.value);
-            setErrors((prev) => ({ ...prev, password: '' }));
-          }}
-          error={!!errors.password}
-          helperText={errors.password}
-        />
-      </StyledDialogContent>
-
-      <StyledDialogActions>
-        <Button 
-          onClick={handleClose}
-          sx={{
-            '&:hover': {
-              backgroundColor: 'action.hover',
-            },
-          }}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          color="primary"
-          sx={{
-            '&:hover': {
-              backgroundColor: 'primary.dark',
-            },
-          }}
-        >
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          {fields.map((field) => (
+            <TextField
+              key={field.name}
+              label={field.label}
+              type={field.type || 'text'}
+              value={credentials[field.name]}
+              onChange={(e) =>
+                setCredentials((prev) => ({
+                  ...prev,
+                  [field.name]: e.target.value,
+                }))
+              }
+              fullWidth
+            />
+          ))}
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={handleSubmit} variant="contained" color="primary">
           Submit
         </Button>
-      </StyledDialogActions>
-    </StyledDialog>
+      </DialogActions>
+    </Dialog>
   );
 };
 
-export const showCredentialsModal = (platformName: string): Promise<Credentials | null> => {
+export const showCredentialsModal = (platformName: string, fields: Array<{
+  name: string;
+  label: string;
+  type?: string;
+  default?: string;
+}>): Promise<Record<string, string> | null> => {
   return new Promise((resolve) => {
     const modalRoot = document.createElement('div');
     document.body.appendChild(modalRoot);
@@ -185,7 +105,7 @@ export const showCredentialsModal = (platformName: string): Promise<Credentials 
       cleanup();
     };
 
-    const handleSubmit = (credentials: Credentials) => {
+    const handleSubmit = (credentials: Record<string, string>) => {
       resolve(credentials);
       cleanup();
     };
@@ -199,7 +119,8 @@ export const showCredentialsModal = (platformName: string): Promise<Credentials 
         open={true}
         onClose={handleClose}
         onSubmit={handleSubmit}
-        platformName={platformName}
+        fields={fields}
+        title={`Enter ${platformName} Credentials`}
       />,
       modalRoot
     );
