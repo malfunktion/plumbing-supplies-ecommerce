@@ -181,10 +181,22 @@ const DeploymentStep: React.FC<DeploymentStepProps> = ({ data, onUpdate }) => {
               {deploymentOptions.map((option) => (
                 <MenuItem key={option.id} value={option.id}>
                   <Box>
-                    <Typography variant="subtitle1">{option.name}</Typography>
+                    <Typography variant="subtitle1">
+                      {option.name}
+                      {option.pricing?.free && (
+                        <Typography component="span" color="success.main" sx={{ ml: 1 }}>
+                          (Free)
+                        </Typography>
+                      )}
+                    </Typography>
                     <Typography variant="body2" color="textSecondary">
                       {option.description}
                     </Typography>
+                    {option.pricing?.startingPrice && (
+                      <Typography variant="body2" color="primary">
+                        Starting from {option.pricing.startingPrice}
+                      </Typography>
+                    )}
                   </Box>
                 </MenuItem>
               ))}
@@ -203,10 +215,22 @@ const DeploymentStep: React.FC<DeploymentStepProps> = ({ data, onUpdate }) => {
               {deploymentOptions.map((option) => (
                 <MenuItem key={option.id} value={option.id}>
                   <Box>
-                    <Typography variant="subtitle1">{option.name}</Typography>
+                    <Typography variant="subtitle1">
+                      {option.name}
+                      {option.pricing?.free && (
+                        <Typography component="span" color="success.main" sx={{ ml: 1 }}>
+                          (Free)
+                        </Typography>
+                      )}
+                    </Typography>
                     <Typography variant="body2" color="textSecondary">
                       {option.description}
                     </Typography>
+                    {option.pricing?.startingPrice && (
+                      <Typography variant="body2" color="primary">
+                        Starting from {option.pricing.startingPrice}
+                      </Typography>
+                    )}
                   </Box>
                 </MenuItem>
               ))}
@@ -214,21 +238,16 @@ const DeploymentStep: React.FC<DeploymentStepProps> = ({ data, onUpdate }) => {
             <FormHelperText>Choose your backend deployment platform</FormHelperText>
           </StyledFormControl>
 
-          <TextField
-            fullWidth
-            label="Custom Domain"
-            variant="outlined"
-            value={domain}
-            onChange={handleDomainChange}
-            helperText="Enter your custom domain (optional)"
-            sx={{ mt: 2 }}
-          />
+          <StyledFormControl fullWidth>
+            <TextField
+              label="Domain"
+              value={domain}
+              onChange={handleDomainChange}
+              helperText="Enter your custom domain (optional)"
+            />
+          </StyledFormControl>
         </CardContent>
       </StyledCard>
-
-      <Typography variant="body2" color="textSecondary">
-        Make sure you have the necessary permissions and access tokens for your chosen platforms.
-      </Typography>
     </Box>
   );
 };

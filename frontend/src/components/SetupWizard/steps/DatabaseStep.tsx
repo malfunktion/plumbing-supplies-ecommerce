@@ -60,6 +60,9 @@ const DatabaseStep: React.FC<DatabaseStepProps> = ({ data, onUpdate }) => {
       ...data,
       provider: newProvider,
       isConnected: false,
+      config: {
+        ssl: true,
+      },
     });
   };
 

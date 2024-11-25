@@ -20,6 +20,11 @@ export interface DatabaseSetupData {
   name: string;
   provider: string;
   isConnected: boolean;
+  config?: {
+    ssl?: boolean;
+    replicaSet?: string;
+    authSource?: string;
+  };
 }
 
 // Admin setup types
