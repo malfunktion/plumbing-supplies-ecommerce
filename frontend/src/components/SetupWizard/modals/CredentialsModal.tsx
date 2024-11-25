@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Dialog,
   DialogTitle,
@@ -53,7 +54,7 @@ export const CredentialsModal: React.FC<CredentialsModalProps> = ({
     onSubmit(credentials);
   };
 
-  return (
+  return createPortal(
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
@@ -86,7 +87,8 @@ export const CredentialsModal: React.FC<CredentialsModalProps> = ({
           Submit
         </Button>
       </DialogActions>
-    </Dialog>
+    </Dialog>,
+    document.body
   );
 };
 
@@ -97,32 +99,24 @@ export const showCredentialsModal = (platformName: string, fields: Array<{
   default?: string;
 }>): Promise<Record<string, string> | null> => {
   return new Promise((resolve) => {
-    const modalRoot = document.createElement('div');
-    document.body.appendChild(modalRoot);
-
     const handleClose = () => {
       resolve(null);
-      cleanup();
     };
 
     const handleSubmit = (credentials: Record<string, string>) => {
       resolve(credentials);
-      cleanup();
     };
 
-    const cleanup = () => {
-      document.body.removeChild(modalRoot);
-    };
-
-    ReactDOM.render(
+    const modal = (
       <CredentialsModal
         open={true}
         onClose={handleClose}
         onSubmit={handleSubmit}
         fields={fields}
         title={`Enter ${platformName} Credentials`}
-      />,
-      modalRoot
+      />
     );
+
+    return modal;
   });
 };

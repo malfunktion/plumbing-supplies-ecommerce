@@ -27,7 +27,7 @@ const StyledFormControl = styled(FormControl)(({ theme }) => ({
 
 interface DatabaseStepProps {
   data: DatabaseSetupData;
-  onUpdate: (data: DatabaseSetupData) => void;
+  onUpdate: (data: Partial<DatabaseSetupData>) => void;
 }
 
 const databaseProviders = [
@@ -57,8 +57,9 @@ const DatabaseStep: React.FC<DatabaseStepProps> = ({ data, onUpdate }) => {
     const newProvider = event.target.value;
     setProvider(newProvider);
     onUpdate({
-      ...data,
       provider: newProvider,
+      uri: '',
+      name: '',
       isConnected: false,
       config: {
         ssl: true,
@@ -70,7 +71,6 @@ const DatabaseStep: React.FC<DatabaseStepProps> = ({ data, onUpdate }) => {
     const newUri = event.target.value;
     setUri(newUri);
     onUpdate({
-      ...data,
       uri: newUri,
       isConnected: false,
     });
@@ -80,7 +80,6 @@ const DatabaseStep: React.FC<DatabaseStepProps> = ({ data, onUpdate }) => {
     const newName = event.target.value;
     setName(newName);
     onUpdate({
-      ...data,
       name: newName,
       isConnected: false,
     });
