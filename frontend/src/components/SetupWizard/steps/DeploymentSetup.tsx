@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@mui/material/styles';
 import {
   Box,
   FormControl,
@@ -16,6 +16,7 @@ import { DeploymentConfigForm } from './DeploymentConfig';
 import { deploymentPlatforms } from '@/services/deploymentValidation';
 import { TokenInputModal } from '../modals/TokenInputModal';
 import { CredentialsModal } from '../modals/CredentialsModal';
+import type { DeploymentSetupProps } from '@/types/setup';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(3),
@@ -175,15 +176,59 @@ const deploymentOptions = {
 };
 
 export const DeploymentSetup = ({ data, onUpdate, onNext, onBack }: DeploymentSetupProps) => {
-  const [error, setError] = useState('');
-  const [selectedFrontend, setSelectedFrontend] = useState<DeploymentOption | null>(
-    data.frontendDeployment ? deploymentOptions.frontend.find(p => p.id === data.frontendDeployment) || null : null
-  );
-  const [selectedBackend, setSelectedBackend] = useState<DeploymentOption | null>(
-    data.backendDeployment ? deploymentOptions.backend.find(p => p.id === data.backendDeployment) || null : null
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFrontendDeploymentChange = (value: string) => {
+    onUpdate({
+      frontendDeployment: value,
+      frontendConfig: {},
+      frontendAuth: { isAuthenticated: false },
+    });
+  };
+
+  const handleBackendDeploymentChange = (value: string) => {
+    onUpdate({
+      backendDeployment: value,
+      backendConfig: {},
+      backendAuth: { isAuthenticated: false },
+    });
+  };
+
+  const handleFrontendConfigChange = (config: any) => {
+    onUpdate({
+      frontendConfig: config,
+    });
+  };
+
+  const handleBackendConfigChange = (config: any) => {
+    onUpdate({
+      backendConfig: config,
+    });
+  };
+
+  const handleValidationStatus = (status: any, isBackend: boolean) => {
+    onUpdate({
+      validation: {
+        ...data.validation,
+        [isBackend ? 'backendValid' : 'frontendValid']: status.isValid,
+        isValid: isBackend
+          ? status.isValid && (data.validation?.frontendValid ?? true)
+          : status.isValid && (data.validation?.backendValid ?? true),
+      },
+    });
+  };
+
+  const selectedFrontend = deploymentOptions.frontend.find(
+    (p) => p.id === data.frontendDeployment
   );
 
-  const handleAuth = async (option: DeploymentOption, isBackend: boolean) => {
+  const selectedBackend = deploymentOptions.backend.find(
+    (p) => p.id === data.backendDeployment
+  );
+
+  const handleAuth = async (option: any, isBackend: boolean) => {
     const { auth } = option;
 
     try {
@@ -233,7 +278,7 @@ export const DeploymentSetup = ({ data, onUpdate, onNext, onBack }: DeploymentSe
   };
 
   const handleAuthSuccess = async (
-    option: DeploymentOption,
+    option: any,
     isBackend: boolean,
     token: string
   ) => {
@@ -250,62 +295,6 @@ export const DeploymentSetup = ({ data, onUpdate, onNext, onBack }: DeploymentSe
         isAuthenticated: true,
       },
     });
-  };
-
-  const handleFrontendDeploymentChange = async (value: string) => {
-    const selectedOption = deploymentOptions.frontend.find((opt) => opt.id === value);
-    if (selectedOption) {
-      setSelectedFrontend(selectedOption);
-      if (selectedOption.auth) {
-        await handleAuth(selectedOption, false);
-      }
-      onUpdate({ frontendDeployment: value });
-    }
-  };
-
-  const handleBackendDeploymentChange = async (value: string) => {
-    const selectedOption = deploymentOptions.backend.find((opt) => opt.id === value);
-    if (selectedOption) {
-      setSelectedBackend(selectedOption);
-      if (selectedOption.auth) {
-        await handleAuth(selectedOption, true);
-      }
-      onUpdate({ backendDeployment: value });
-    }
-  };
-
-  const handleFrontendConfigChange = (config: DeploymentConfig) => {
-    onUpdate({ frontendConfig: config });
-  };
-
-  const handleBackendConfigChange = (config: DeploymentConfig) => {
-    onUpdate({ backendConfig: config });
-  };
-
-  const handleValidationStatus = (status: ValidationStatus, isBackend: boolean) => {
-    onUpdate({
-      validation: status,
-      isConfigured: status.isValid,
-    });
-  };
-
-  const handleSubmit = () => {
-    if (!data.frontendDeployment || !data.backendDeployment) {
-      setError('Please select both frontend and backend deployment options');
-      return;
-    }
-
-    if (!data.frontendAuth?.isAuthenticated || !data.backendAuth?.isAuthenticated) {
-      setError('Please complete authentication for both platforms');
-      return;
-    }
-
-    if (!data.validation?.isValid) {
-      setError('Please fix configuration errors before proceeding');
-      return;
-    }
-
-    onNext();
   };
 
   return (
@@ -399,13 +388,36 @@ export const DeploymentSetup = ({ data, onUpdate, onNext, onBack }: DeploymentSe
           </StyledButton>
           <StyledButton
             variant="contained"
-            onClick={handleSubmit}
+            onClick={onNext}
             disabled={!data.validation?.isValid}
           >
             Next
           </StyledButton>
         </Box>
       </StyledPaper>
+
+      {/* Modals */}
+      <TokenInputModal
+        open={showTokenModal}
+        onClose={() => setShowTokenModal(false)}
+        onSubmit={(token) => {
+          // Handle token submission
+          setShowTokenModal(false);
+        }}
+        title="Enter API Token"
+        description="Please enter your API token to authenticate."
+      />
+
+      <CredentialsModal
+        open={showCredentialsModal}
+        onClose={() => setShowCredentialsModal(false)}
+        onSubmit={(username, password) => {
+          // Handle credentials submission
+          setShowCredentialsModal(false);
+        }}
+        title="Enter Credentials"
+        description="Please enter your credentials to authenticate."
+      />
     </Box>
   );
 };
