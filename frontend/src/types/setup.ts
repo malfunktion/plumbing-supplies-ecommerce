@@ -41,6 +41,15 @@ export interface ValidationStatus {
   warnings: string[];
 }
 
+export interface PlatformRequirements {
+  minMemory?: string;
+  minStorage?: string;
+  minCpu?: string;
+  requiredEnvironmentVars?: string[];
+  minimumNodeVersion?: string;
+  supportedFrameworks?: string[];
+}
+
 // Deployment config types
 export interface DeploymentConfig {
   provider: string;
@@ -52,6 +61,22 @@ export interface DeploymentConfig {
     storage: string;
     cpu: string;
   };
+  auth: {
+    type: 'oauth' | 'api-token' | 'credentials';
+    provider: string;
+    scope?: string[];
+    setupUrl?: string;
+    host?: string;
+    username?: string;
+    password?: string;
+    secure?: boolean;
+  };
+  environmentVars?: Record<string, string>;
+  framework?: string;
+  buildCommand?: string;
+  outputDir?: string;
+  customDomain?: string;
+  nodeVersion?: string;
 }
 
 // Deployment option types
@@ -69,13 +94,9 @@ export interface DeploymentOption {
     username?: string;
     password?: string;
     secure?: boolean;
+    validationUrl?: string;
   };
-  requirements: {
-    minMemory?: string;
-    minStorage?: string;
-    minCpu?: string;
-    requiredEnvironmentVars?: string[];
-  };
+  requirements: PlatformRequirements;
 }
 
 // Authentication types
@@ -122,49 +143,38 @@ export interface BaseStepProps extends BaseProps {
 }
 
 // Backend setup props
-export interface BackendSetupProps {
+export interface BackendSetupProps extends BaseProps {
   data: BackendSetupData;
   onUpdate: (data: Partial<BackendSetupData>) => void;
-  onNext: () => void;
 }
 
 // Database setup props
-export interface DatabaseSetupProps {
+export interface DatabaseSetupProps extends BaseStepProps {
   data: DatabaseSetupData;
   onUpdate: (data: Partial<DatabaseSetupData>) => void;
-  onNext: () => void;
-  onBack: () => void;
 }
 
 // Admin setup props
-export interface AdminSetupProps {
+export interface AdminSetupProps extends BaseStepProps {
   data: AdminSetupData;
   onUpdate: (data: Partial<AdminSetupData>) => void;
-  onNext: () => void;
-  onBack: () => void;
 }
 
 // Sample data setup props
-export interface SampleDataSetupProps {
+export interface SampleDataSetupProps extends BaseStepProps {
   data: SampleDataSetupData;
   onUpdate: (data: Partial<SampleDataSetupData>) => void;
-  onNext: () => void;
-  onBack: () => void;
 }
 
 // Deployment setup props
-export interface DeploymentSetupProps {
+export interface DeploymentSetupProps extends BaseStepProps {
   data: DeploymentSetupData;
   onUpdate: (data: Partial<DeploymentSetupData>) => void;
-  onNext: () => void;
-  onBack: () => void;
 }
 
 // Finish setup props
-export interface FinishSetupProps {
+export interface FinishSetupProps extends BaseStepProps {
   setupData: SetupData;
-  onNext: () => void;
-  onBack: () => void;
 }
 
 // Theme types
