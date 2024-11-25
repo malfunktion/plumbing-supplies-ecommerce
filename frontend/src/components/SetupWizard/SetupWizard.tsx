@@ -3,16 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import DatabaseSetup from './steps/DatabaseSetup';
 import AdminSetup from './steps/AdminSetup';
 import SampleDataSetup from './steps/SampleDataSetup';
-import DeploymentSetup from './steps/DeploymentSetup';
+import { DeploymentSetup } from './steps/DeploymentSetup';
 import BackendSetup from './steps/BackendSetup';
 import FinishSetup from './steps/FinishSetup';
-
-export type SetupStep = 'backend' | 'database' | 'admin' | 'sample-data' | 'deployment' | 'finish';
+import { SetupStep, SetupData } from '@/types/setup';
 
 const SetupWizard = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<SetupStep>('backend');
-  const [setupData, setSetupData] = useState({
+  const [setupData, setSetupData] = useState<SetupData>({
     backend: {
       url: '',
       isConnected: false
@@ -31,16 +30,13 @@ const SetupWizard = () => {
       isInstalled: false
     },
     deployment: {
-      frontendDeployment: '',
-      backendDeployment: '',
-      isConfigured: false
+      provider: '',
+      url: '',
+      isDeployed: false
     }
   });
 
-  const updateSetupData = (
-    step: SetupStep,
-    data: Partial<typeof setupData[keyof typeof setupData]>
-  ) => {
+  const updateSetupData = (step: keyof SetupData, data: Partial<SetupData[keyof SetupData]>) => {
     setSetupData(prev => ({
       ...prev,
       [step]: { ...prev[step], ...data }
@@ -52,8 +48,6 @@ const SetupWizard = () => {
     const currentIndex = steps.indexOf(currentStep);
     if (currentIndex < steps.length - 1) {
       setCurrentStep(steps[currentIndex + 1]);
-    } else {
-      navigate('/');
     }
   };
 
@@ -65,73 +59,59 @@ const SetupWizard = () => {
     }
   };
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case 'backend':
-        return (
-          <BackendSetup
-            onNext={(url) => {
-              updateSetupData('backend', { url, isConnected: true });
-              handleNext();
-            }}
-          />
-        );
-      case 'database':
-        return (
-          <DatabaseSetup
-            data={setupData.database}
-            onUpdate={(data) => updateSetupData('database', data)}
-            onNext={handleNext}
-            onBack={handleBack}
-          />
-        );
-      case 'admin':
-        return (
-          <AdminSetup
-            data={setupData.admin}
-            onUpdate={(data) => updateSetupData('admin', data)}
-            onNext={handleNext}
-            onBack={handleBack}
-          />
-        );
-      case 'sample-data':
-        return (
-          <SampleDataSetup
-            data={setupData.sampleData}
-            onUpdate={(data) => updateSetupData('sample-data', data)}
-            onNext={handleNext}
-            onBack={handleBack}
-          />
-        );
-      case 'deployment':
-        return (
-          <DeploymentSetup
-            data={setupData.deployment}
-            onUpdate={(data) => updateSetupData('deployment', data)}
-            onNext={handleNext}
-            onBack={handleBack}
-          />
-        );
-      case 'finish':
-        return (
-          <FinishSetup
-            setupData={setupData}
-            onNext={handleNext}
-            onBack={handleBack}
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {renderStep()}
-        </div>
-      </div>
+    <div className="max-w-2xl mx-auto p-4">
+      {currentStep === 'backend' && (
+        <BackendSetup
+          data={setupData.backend}
+          onUpdate={(data) => updateSetupData('backend', data)}
+          onNext={handleNext}
+        />
+      )}
+
+      {currentStep === 'database' && (
+        <DatabaseSetup
+          data={setupData.database}
+          onUpdate={(data) => updateSetupData('database', data)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      )}
+
+      {currentStep === 'admin' && (
+        <AdminSetup
+          data={setupData.admin}
+          onUpdate={(data) => updateSetupData('admin', data)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      )}
+
+      {currentStep === 'sample-data' && (
+        <SampleDataSetup
+          data={setupData.sampleData}
+          onUpdate={(data) => updateSetupData('sampleData', data)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      )}
+
+      {currentStep === 'deployment' && (
+        <DeploymentSetup
+          data={setupData.deployment}
+          onUpdate={(data) => updateSetupData('deployment', data)}
+          onNext={handleNext}
+          onBack={handleBack}
+        />
+      )}
+
+      {currentStep === 'finish' && (
+        <FinishSetup
+          setupData={setupData}
+          onNext={() => navigate('/')}
+          onBack={handleBack}
+        />
+      )}
     </div>
   );
 };
